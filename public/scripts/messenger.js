@@ -20,10 +20,10 @@ var Messenger = React.createClass({
     });
   },
 
-  // logout: function() {
-  //   this.setState({authenticated: false});
-  //   localStorage.setItem('auth', false);
-  // },
+  logout: function() {
+    this.setState({authenticated: false});
+    localStorage.setItem('auth', false);
+  },
 
   render: function() {
     if (!this.state.authenticated) {
@@ -35,11 +35,16 @@ var Messenger = React.createClass({
       )
     } else {
       return (
-         <AppStatus />
+        <div className="Messenger">
+          <div className="appStatus">
+            <AppStatus />
+          </div>
+          /* TODO Logout button */
+        </div>
       )
     }
   }
-})
+});
 
 var AppStatus = React.createClass({
   getInitialState: function() {
@@ -67,30 +72,29 @@ var AppStatus = React.createClass({
       <SessionData data={this.state.data} />
     )
   }
-})
+});
 
 
 var SessionData = React.createClass({
   render: function() {
-    var commentNodes = this.props.data.map(function(Cookie) {
+    var sesionData = this.props.data.map(function(Cookie) {
       return (
-        <p key={Cookie.key, Cookie.Path}> {
+        <p key={Cookie.key}> {
           Cookie.value + "\n" +
           Cookie.Path + "\n" +
           Cookie.hostOnly + "\n" +
           Cookie.aAge + "\n" +
           Cookie.cAge + "\n" 
-        }
-        </p>
+        }</p>
       );
     });
     return (
-      <div className="commentList">
-        {commentNodes}
+      <div className="sessionData">
+        {sesionData}
       </div>
     );
   }
-})
+});
 
 
 
