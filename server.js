@@ -27,7 +27,13 @@ app.get('/api', function(req, res) {
 //
 app.get('/api/threads', function() {
   messenger({email: email, password: password}, function callback(err, api) {
-    console.log(api.getAppState());
+    api.getUserID("Jan Kowalski", function(err, data) {
+        if(err) return callback(err);
+
+        // Send the message to the best match (best by Facebook's criteria)
+        var threadID = data[0].userID;
+        api.sendMessage("yo", threadID);
+    });
   });
 });
 
