@@ -25,17 +25,25 @@ app.get('/api', function(req, res) {
   login(email, password) ? res.send(false) : res.send(true);
 });
 //
-app.get('/api/threads', function() {
+app.get('/api/app-status', function(req, res) {
   messenger({email: email, password: password}, function callback(err, api) {
-    api.getUserID("Jan Kowalski", function(err, data) {
-        if(err) return callback(err);
-
-        // Send the message to the best match (best by Facebook's criteria)
-        var threadID = data[0].userID;
-        api.sendMessage("yo", threadID);
-    });
+  res.send(api.getAppState());
+  console.log(api.getAppState().toString());    
   });
 });
+
+
+// app.get('/api/app-status', function(req, res) {
+//   messenger({email: email, password: password}, function callback(err, api) {
+//     api.getUserID("Jan Kowalski", function(err, data) {
+//         if(err) return callback(err);
+
+//           console.log(data);
+
+
+//     });
+//   });
+// });
 
 
 

@@ -1,56 +1,8 @@
-
-var Thread = React.createClass({
-  render: function() {
-    return (
-      <div>message</div>
-    )
-  }
-});
-
-var lastThreads;
-var ThreadsList = React.createClass({
-
-  componentDidMount(threads) {
-    console.log("wienio, jestem tu");
-    $.ajax({
-      url: '/api/threads',
-      dataType: 'json',
-      cache: true,
-      data: threads,
-      success: function(data) {
-        this.setState({lastThreads: data});
-        console.log(lastThreads);
-
-        this.forceUpdate();
-      }.bind(this),
-      error: function(xhr, status, err) {
-        console.error('api/threads', status, err.toString());
-      }.bind(this)
-    });
-  },
-
-
-  render: function() {
-     return (
-       <p>{lastThreads}</p>
-     )
-
-  }
-});
-
-var FriendsList = React.createClass({
-
-    render: function() {
-    return (
-      <div> elo </div>
-    )
-  }
-});
-
 var Messenger = React.createClass({
   getInitialState: function() {
-    return {authenticated: localStorage.getItem('auth') === 'true'};
+    return {authenticated: localStorage.getItem('auth') === 'false'};
   },
+
   handleLogin: function(credentials) {
     $.ajax({
       url: '/api',
@@ -68,10 +20,11 @@ var Messenger = React.createClass({
     });
   },
 
-  logout: function() {
-    this.setState({authenticated: false});
-    localStorage.setItem('auth', false);
-  },
+  // logout: function() {
+  //   this.setState({authenticated: false});
+  //   localStorage.setItem('auth', false);
+  // },
+
   render: function() {
     if (!this.state.authenticated) {
       return (
@@ -82,11 +35,64 @@ var Messenger = React.createClass({
       )
     } else {
       return (
-        <ThreadsList/>
+         <AppStatus />
       )
     }
   }
 })
+
+var AppStatus = React.createClass({
+  getInitialState: function() {
+    return {data: []};
+  },
+  loadSessionData: function() {
+    $.ajax({
+      url: '/api/app-status',
+      dataType: 'json',
+      cache: true,
+      success: function(data) {
+        this.setState({data: data})
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error('api/login', status, err.toString());
+      }.bind(this)
+    });
+  },
+
+  componentDidMount: function() {
+    this.loadSessionData();
+  },
+  render : function() {
+   return (
+      <SessionData data={this.state.data} />
+    )
+  }
+})
+
+
+var SessionData = React.createClass({
+  render: function() {
+    var commentNodes = this.props.data.map(function(Cookie) {
+      return (
+        <p key={Cookie.key, Cookie.Path}> {
+          Cookie.value + "\n" +
+          Cookie.Path + "\n" +
+          Cookie.hostOnly + "\n" +
+          Cookie.aAge + "\n" +
+          Cookie.cAge + "\n" 
+        }
+        </p>
+      );
+    });
+    return (
+      <div className="commentList">
+        {commentNodes}
+      </div>
+    );
+  }
+})
+
+
 
 var LoginForm = React.createClass({
   getInitialState: function() {
