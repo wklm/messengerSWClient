@@ -35,18 +35,57 @@ var Messenger = React.createClass({
       )
     } else {
       return (
-        <div className="Messenger">
-          <div className="appStatus">
-            <AppStatus />
+        <div className="Messenger row text-center">
+          <div className="appStatus small-2 columns">
+            <FriendsList />
           </div>
-          /* TODO Logout button */
         </div>
       )
     }
   }
 });
 
-var AppStatus = React.createClass({
+var FriendsList = React.createClass ({
+  getInitialState: function() {
+    return {data: []};
+  },
+  loadFriendsList: function() {
+    $.ajax({
+      url: '/api/friends',
+      dataType: 'json',
+      cache: true,
+      success: function(data) {
+        this.setState({data: data})
+        console.log(data);
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error('api/friends', status, err.toString());
+      }.bind(this)
+    });
+  },
+  componentDidMount: function() {
+    this.loadFriendsList();
+  },
+
+  render: function() {
+    var friends = this.state.data.map(function(friend) {
+      return (
+          <div key={friend.userID}>
+            <img src={friend.profilePicture} alt=""/>
+            <p> {friend.firstName} </p>
+          </div>
+      );
+    });
+    return (
+        <div className="commentList">
+          {friends}
+        </div>
+    );
+  }
+});
+
+
+var AppStatus = React.createClass ({
   getInitialState: function() {
     return {data: []};
   },
@@ -75,7 +114,7 @@ var AppStatus = React.createClass({
 });
 
 
-var SessionData = React.createClass({
+var SessionData = React.createClass ({
   render: function() {
     var sesionData = this.props.data.map(function(Cookie) {
       return (
@@ -118,21 +157,23 @@ var LoginForm = React.createClass({
   },
   render: function() {
     return (
-      <form className="loginForm" onSubmit={this.handleSubmit}>
-        <input
-          type="text"
-          placeholder="your email"
-          value={this.state.email}
-          onChange={this.handleEmailChange}
-        />
-        <input
-          type="password"
-          placeholder="password"
-          value={this.state.password}
-          onChange={this.handlePasswordChange}
-        />
-        <input type="submit" value="login"/>
-      </form>
+        <div className="row">
+          <form className="loginForm small-4 columns" onSubmit={this.handleSubmit}>
+            <input
+              type="text"
+              placeholder="your email"
+              value={this.state.email}
+              onChange={this.handleEmailChange}
+            />
+            <input
+              type="password"
+              placeholder="password"
+              value={this.state.password}
+              onChange={this.handlePasswordChange}
+            />
+            <input type="submit" value="login"/>
+          </form>
+        </div>
     );
   }
 });
