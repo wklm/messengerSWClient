@@ -1,31 +1,31 @@
 var Messenger = React.createClass({
-  getInitialState: function() {
+  getInitialState: function () {
     return {authenticated: localStorage.getItem('auth') === 'false'};
   },
 
-  handleLogin: function(credentials) {
+  handleLogin: function (credentials) {
     $.ajax({
       url: '/api',
       dataType: 'json',
       cache: true,
       data: credentials,
-      success: function(data) {
+      success: function (data) {
         this.setState({authenticated: data});
         localStorage.setItem('auth', data);
       }.bind(this),
-      error: function(xhr, status, err) {
+      error: function (xhr, status, err) {
         this.setState({data: credentials});
         console.error('api/login', status, err.toString());
       }.bind(this)
     });
   },
 
-  logout: function() {
+  logout: function () {
     this.setState({authenticated: false});
     localStorage.setItem('auth', false);
   },
 
-  render: function() {
+  render: function () {
     if (!this.state.authenticated) {
       return (
         <div className="Messenger">
@@ -37,7 +37,7 @@ var Messenger = React.createClass({
       return (
         <div className="Messenger row text-center">
           <div className="appStatus small-2 columns">
-            <FriendsList />
+            <ThreadsList />
           </div>
         </div>
       )
@@ -45,85 +45,120 @@ var Messenger = React.createClass({
   }
 });
 
-var FriendsList = React.createClass ({
-  getInitialState: function() {
+var FriendsList = React.createClass({
+  getInitialState: function () {
     return {data: []};
   },
-  loadFriendsList: function() {
+  loadFriendsList: function () {
     $.ajax({
       url: '/api/friends',
       dataType: 'json',
       cache: true,
-      success: function(data) {
-        this.setState({data: data})
+      success: function (data) {
+        this.setState({data: data});
         console.log(data);
       }.bind(this),
-      error: function(xhr, status, err) {
+      error: function (xhr, status, err) {
         console.error('api/friends', status, err.toString());
       }.bind(this)
     });
   },
-  componentDidMount: function() {
+  componentDidMount: function () {
     this.loadFriendsList();
   },
 
-  render: function() {
-    var friends = this.state.data.map(function(friend) {
+  render: function () {
+    var friends = this.state.data.map(function (friend) {
       return (
-          <div key={friend.userID}>
-            <img src={friend.profilePicture} alt=""/>
-            <p> {friend.firstName} </p>
-          </div>
+        <div key={friend.userID}>
+          <img src={friend.profilePicture} alt=""/>
+          <p> {friend.firstName} </p>
+        </div>
       );
     });
     return (
-        <div className="commentList">
-          {friends}
-        </div>
+      <div className="commentList">
+        {friends}
+      </div>
     );
   }
 });
 
-
-var AppStatus = React.createClass ({
-  getInitialState: function() {
+var ThreadsList = React.createClass({
+  getInitialState: function () {
     return {data: []};
   },
-  loadSessionData: function() {
+  loadFriendsList: function () {
+    $.ajax({
+      url: '/api/threads',
+      dataType: 'json',
+      cache: true,
+      success: function (data) {
+        this.setState({data: data})
+      }.bind(this),
+      error: function (xhr, status, err) {
+        console.error('api/threads', status, err.toString());
+      }.bind(this)
+    });
+  },
+  componentDidMount: function () {
+    this.loadFriendsList();
+  },
+
+  render: function () {
+    var friends = this.state.data.map(function (thread) {
+      return (
+        <div key={thread.threadID}>
+          <p> {thread.snippet} </p>
+        </div>
+      );
+    });
+    return (
+      <div className="commentList">
+        {friends}
+      </div>
+    );
+  }
+});
+
+var AppStatus = React.createClass({
+  getInitialState: function () {
+    return {data: []};
+  },
+  loadSessionData: function () {
     $.ajax({
       url: '/api/app-status',
       dataType: 'json',
       cache: true,
-      success: function(data) {
+      success: function (data) {
         this.setState({data: data})
       }.bind(this),
-      error: function(xhr, status, err) {
+      error: function (xhr, status, err) {
         console.error('api/login', status, err.toString());
       }.bind(this)
     });
   },
 
-  componentDidMount: function() {
+  componentDidMount: function () {
     this.loadSessionData();
   },
-  render : function() {
-   return (
-      <SessionData data={this.state.data} />
+  render: function () {
+    return (
+      <SessionData data={this.state.data}/>
     )
   }
 });
 
-
-var SessionData = React.createClass ({
-  render: function() {
-    var sesionData = this.props.data.map(function(Cookie) {
+var SessionData = React.createClass({
+  render: function () {
+    var sesionData = this.props.data.map(function (Cookie) {
       return (
         <p key={Cookie.key}> {
           Cookie.value + "\n" +
           Cookie.Path + "\n" +
           Cookie.hostOnly + "\n" +
           Cookie.aAge + "\n" +
-          Cookie.cAge + "\n" 
+          Cookie.cAge + "\n"
         }</p>
       );
     });
@@ -135,50 +170,54 @@ var SessionData = React.createClass ({
   }
 });
 
-
-
 var LoginForm = React.createClass({
-  getInitialState: function() {
+  getInitialState: function () {
     return {email: '', password: ''};
   },
-  handleEmailChange: function(e) {
+  handleEmailChange: function (e) {
     this.setState({email: e.target.value});
   },
-  handlePasswordChange: function(e) {
+  handlePasswordChange: function (e) {
     this.setState({password: e.target.value});
   },
-  handleSubmit: function(e) {
+  handleSubmit: function (e) {
     e.preventDefault();
     var email = this.state.email.trim();
     var password = this.state.password.trim();
-    if(!email || !password) return;
+    if (!email || !password) return;
     this.props.onLogin({email: email, password: password});
     this.setState({email: '', password: ''});
   },
-  render: function() {
+  render: function () {
     return (
-        <div className="row">
-          <form className="loginForm small-4 columns" onSubmit={this.handleSubmit}>
-            <input
-              type="text"
-              placeholder="your email"
-              value={this.state.email}
-              onChange={this.handleEmailChange}
-            />
-            <input
-              type="password"
-              placeholder="password"
-              value={this.state.password}
-              onChange={this.handlePasswordChange}
-            />
-            <input type="submit" value="login"/>
-          </form>
-        </div>
+      <div className="row">
+        <form className="loginForm small-4 columns" onSubmit={this.handleSubmit}>
+          <input
+            type="text"
+            placeholder="your email"
+            value={this.state.email}
+            onChange={this.handleEmailChange}
+          />
+          <input
+            type="password"
+            placeholder="password"
+            value={this.state.password}
+            onChange={this.handlePasswordChange}
+          />
+          <input type="submit" value="login"/>
+        </form>
+      </div>
     );
   }
 });
 
 ReactDOM.render(
   <Messenger />,
-  document.getElementById('content')
+  document.getElementById('messenger')
 );
+
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw', {
+    scope: '/'
+  });
+}
