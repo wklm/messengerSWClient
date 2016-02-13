@@ -25,11 +25,23 @@ var Messenger = React.createClass({
     localStorage.setItem('auth', false);
   },
 
+  componentDidMount: function() {
+    var socket = io.connect('localhost:3000');
+    $('form').submit(function(){
+      socket.emit('chat message', $('#m').val());
+      $('#m').val('');
+      return false;
+    });
+    socket.on('chat message', function(msg){
+      $('#messages').append($('<li>').text(msg));
+    });
+  },
+
   render: function () {
     if (!this.state.authenticated) {
       return (
         <div className="Messenger">
-          <h1>Messenger</h1>
+          <h1>Messenger on Steroids</h1>
           <LoginForm onLogin={this.handleLogin}/>
         </div>
       )
@@ -38,6 +50,12 @@ var Messenger = React.createClass({
         <div className="Messenger row text-center">
           <div className="appStatus small-2 columns">
             <ThreadsList />
+          </div>
+          <div className="small-6 columns">
+            <ul id="messages"></ul>
+            <form action="">
+              <input id="m" autoComplete="off" /><button>Send</button>
+            </form>
           </div>
         </div>
       )

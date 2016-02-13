@@ -1,18 +1,19 @@
 var path = require('path');
 var express = require('express');
-var bodyParser = require('body-parser');
+var http = require('http');
 var app = express();
+var server = http.createServer(app);
+var io = require('socket.io').listen(server);
+var bodyParser = require('body-parser');
 var messenger = require('facebook-chat-api');
 
-var email;
-var password;
-
-app.set('port', (process.env.PORT || 3000));
 app.use(require('express-promise')());
 app.use('/', express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
+var email;
+var password;
 
 function login(email, password) {
   messenger({email: email, password: password}, function callback(err) {
@@ -20,18 +21,42 @@ function login(email, password) {
   });
 }
 
+io.on('connection', function(socket){
+  socket.on('chat message', function(msg){
+    console.log('message: ' + msg);
+  });
+});
+
+
+
 app.get('/api', function (req, res) {
   email = req.param('email').toString().trim();
   password = req.param('password').toString().trim();
   login(email, password) ? res.send(false) : res.send(true);
 });
 
-app.get('/api/app-status', function (req, res) {
+
+
+app.get('/api/appStatus', function (req, res) {
   messenger({email: email, password: password}, function callback(err, api) {
     if (err) return console.error(err);
     res.send(api.getAppState());
   });
 });
+
+app.get('/api/threads/:threadID/:portion', function (req, res) {
+  var start = req.params.portion;
+  var end = start + 10;
+
+  messenger({email: email, password: password}, function callback(err, api) {
+    if (err) return console.error(err);
+    api.getThreadHistory(req.params.threadID, start, end, null, function (err, data) {
+      res.send(data);
+    });
+  });
+});
+
+
 
 app.get('/api/friends', function (req, res) {
   messenger({email: email, password: password}, function callback(err, api) {
@@ -42,6 +67,37 @@ app.get('/api/friends', function (req, res) {
   });
 });
 
+app.get('/api/logout', function (req, res) {
+  messenger({email: email, password: password}, function callback(err, api) {
+    api.logout(function (err) {
+      if (err) return console.error(err);
+      res.send(true);
+    });
+  });
+});
+
+app.get('/api/listen', function (req, res) { //socket.io
+  messenger({email: email, password: password}, function callback(err, api) {
+    if (err) return console.error(err);
+    api.setOptions({listenEvents: true});
+
+    api.listen(function (err, event) {
+
+      switch (event.type) {
+        case "message":
+          res.send(event);
+          break;
+        case "event":
+          res.send(event);
+          break;
+        default:
+          console.log(event);
+          break;
+      }
+    });
+  })
+});
+
 app.get('/api/threads', function (req, res) {
   var start = 0;
   var end = 100;
@@ -50,6 +106,15 @@ app.get('/api/threads', function (req, res) {
       if (err) return console.error(err);
       res.send(data);
       console.log(data.length)
+    });
+  });
+});
+
+app.get('/api/getUserByName/:name', function (req, res) {
+  messenger({email: email, password: password}, function callback(err, api) {
+    api.getUserID(req.params.name, function (err, data) {
+      if (err) return console.error(err);
+      res.send(data);
     });
   });
 });
@@ -67,8 +132,9 @@ app.get('/react', function (req, res) {
 });
 
 app.listen(app.get('port'), function () {
-  console.log('Server started: http://localhost:' + app.get('port') + '/');
+  console.log('Server started: http://localhost:3000');
 });
 
+server.listen(3000);
 
-//TODO : prevent multiple logins
+//TODO : prevent multiple logins, getUserInfo
