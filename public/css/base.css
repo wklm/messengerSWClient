@@ -2,13 +2,7 @@ body {
   font-family: "Helvetica Neue", "Segoe UI", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   font-size: 15px;
-  line-height: 1.7;
+  line-height: 1;
   margin: 0;
-  padding: 30px;
-}
-
-
-
-.thread {
-  float: right;
+  padding: 1rem;
 }

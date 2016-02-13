@@ -100,7 +100,7 @@ app.get('/api/listen', function (req, res) { //socket.io
 
 app.get('/api/threads', function (req, res) {
   var start = 0;
-  var end = 100;
+  var end = 5;
   messenger({email: email, password: password}, function callback(err, api) {
     api.getThreadList(start, end, function (err, data) {
       if (err) return console.error(err);

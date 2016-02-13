@@ -48,12 +48,11 @@ var Messenger = React.createClass({
     } else {
       return (
         <div className="Messenger row text-center">
-
-          <div className="small-8 columns end">
-            <Thread/>
-          </div>
           <div className="small-4 columns">
             <ThreadsList/>
+          </div>
+          <div className="small-8 columns end">
+            <Thread/>
           </div>
         </div>
       )
@@ -138,14 +137,26 @@ var ThreadsList = React.createClass({
 
   render: function () {
     var friends = this.state.data.map(function (thread) {
+      var timeDifferenceInHours = (Date.now() - thread.timestamp) / (1000 * 60 * 60);
+      var time =
+        timeDifferenceInHours > 24 ?
+        Math.floor(timeDifferenceInHours / 24) + " days ago" :
+          timeDifferenceInHours / 60 > 1 ?
+          Math.floor(timeDifferenceInHours) + " hours ago" :
+            timeDifferenceInHours * 60 > 1 ?
+            Math.floor(timeDifferenceInHours * 60) + " minutes ago" :
+            Math.floor(timeDifferenceInHours * 60 * 60) + " second ago";
       return (
         <div key={thread.threadID}>
+          <p> {time} </p>
+          <p> {thread.snippetSender} </p>
           <p> {thread.snippet} </p>
         </div>
       );
     });
+
     return (
-      <div className="commentList">
+      <div className="threadsList">
         {friends}
       </div>
     );
