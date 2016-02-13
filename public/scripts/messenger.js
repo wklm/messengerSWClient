@@ -25,14 +25,14 @@ var Messenger = React.createClass({
     localStorage.setItem('auth', false);
   },
 
-  componentDidMount: function() {
-    var socket = io.connect('localhost:3000');
-    $('form').submit(function(){
+  componentDidMount: function () {
+    var socket = io.connect('localhost:3000'); // TODO: ENVS!
+    $('form').submit(function () {
       socket.emit('chat message', $('#m').val());
       $('#m').val('');
       return false;
     });
-    socket.on('chat message', function(msg){
+    socket.on('chat message', function (msg) {
       $('#messages').append($('<li>').text(msg));
     });
   },
@@ -48,20 +48,33 @@ var Messenger = React.createClass({
     } else {
       return (
         <div className="Messenger row text-center">
-          <div className="appStatus small-2 columns">
-            <ThreadsList />
+
+          <div className="small-8 columns end">
+            <Thread/>
           </div>
-          <div className="small-6 columns">
-            <ul id="messages"></ul>
-            <form action="">
-              <input id="m" autoComplete="off" /><button>Send</button>
-            </form>
+          <div className="small-4 columns">
+            <ThreadsList/>
           </div>
         </div>
       )
     }
   }
 });
+
+var Thread = React.createClass({
+  render: function () {
+    return (
+      <div>
+        <p className="right"> lalala </p>
+        <ul id="messages"></ul>
+        <form action="">
+          <input id="m" autoComplete="off"/>
+          <button>Send</button>
+        </form>
+      </div>
+    )
+  }
+})
 
 var FriendsList = React.createClass({
   getInitialState: function () {

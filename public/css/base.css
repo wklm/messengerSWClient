@@ -1,5 +1,4 @@
 body {
-  background: #fff;
   font-family: "Helvetica Neue", "Segoe UI", Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   font-size: 15px;
@@ -9,66 +8,7 @@ body {
 }
 
 
-a {
-  color: #4183c4;
-  text-decoration: none;
+
+.thread {
+  float: right;
 }
-
-a:hover {
-  text-decoration: underline;
-}
-
-code {
-  background-color: #f8f8f8;
-  border: 1px solid #ddd;
-  border-radius: 3px;
-  font-family: "Bitstream Vera Sans Mono", Consolas, Courier, monospace;
-  font-size: 12px;
-  margin: 0 2px;
-  padding: 0px 5px;
-}
-
-h1, h2, h3, h4 {
-  font-weight: bold;
-  margin: 0 0 15px;
-  padding: 0;
-}
-
-h1 {
-  border-bottom: 1px solid #ddd;
-  font-size: 2.5em;
-  font-weight: bold;
-  margin: 0 0 15px;
-  padding: 0;
-}
-
-h2 {
-  border-bottom: 1px solid #eee;
-  font-size: 2em;
-}
-
-h3 {
-  font-size: 1.5em;
-}
-
-h4 {
-  font-size: 1.2em;
-}
-
-p, ul {
-  margin: 15px 0;
-}
-
-ul {
-  padding-left: 30px;
-}
-
-
-/* socket.io */
-
-form { background: #000; padding: 3px; position: fixed; bottom: 0; width: 100%; }
-form input { border: 0; padding: 10px; width: 90%; margin-right: .5%; }
-form button { width: 9%; background: rgb(130, 224, 255); border: none; padding: 10px; }
-#messages { list-style-type: none; margin: 0; padding: 0; }
-#messages li { padding: 5px 10px; }
-#messages li:nth-child(odd) { background: #eee; }
