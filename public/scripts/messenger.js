@@ -114,6 +114,41 @@ var FriendsList = React.createClass({
   }
 });
 
+var ThreadParticipantsNames = React.createClass({
+  getInitialState: function () {
+    return {data: ['dw', 'ewf']};
+  },
+  loadParticipants: function() {
+    var participants = [];
+    for (var id in this.props.ids) {
+      $.ajax({
+        url: '/api/getUserById/' + this.props.ids[id],
+        dataType: 'json',
+        cache: true,
+        success: function (data) {
+          for (var k in data) {
+            participants.push(data[k]['name'] + '\n');
+            this.setState({data: participants});
+          }
+        }.bind(this),
+        error: function (xhr, status, err) {
+          console.error('api/threads', status, err.toString());
+        }.bind(this)
+      });
+    }
+  },
+  componentDidMount: function () {
+    this.loadParticipants();
+  },
+  render: function() {
+    return (
+      <div>
+        {this.state.data}
+      </div>
+    )
+  }
+});
+
 var ThreadsList = React.createClass({
   getInitialState: function () {
     return {data: []};
@@ -139,13 +174,6 @@ var ThreadsList = React.createClass({
   render: function () {
     var friends = this.state.data.map(function (thread) {
       let time = getThreadDate(thread.timestamp);
-
-      console.log(thread.participantIDs);
-      for (var i in thread.participantIDs) {
-        getProfile(thread.participantIDs[i]);
-      }
-
-
       return (
         <div className="row" key={thread.threadID}>
           <div className="small-4 columns">
@@ -154,7 +182,7 @@ var ThreadsList = React.createClass({
                 <img src={"http://blog.webalytics.de/facebook.png"} alt=""/> {/*waiting for api fix */}
               </div>
               <div className="small-8">
-                <p> {} </p>
+                <ThreadParticipantsNames ids={thread.participantIDs}/>
               </div>
             </div>
           </div>
@@ -274,24 +302,6 @@ ReactDOM.render(
 //  });
 //}
 
-function getProfile(id) {
-  console.log(id);
-  $.ajax({
-    url: '/api/getUserById/' + id,
-    dataType: 'json',
-    cache: true,
-    success: function (data) {
-      for (var k in data) {
-        for (var l in data[k]) {
-          console.log(l + ": " + data[k][l]);
-        }
-      }
-    }.bind(this),
-    error: function (xhr, status, err) {
-      console.error('api/threads', status, err.toString());
-    }.bind(this)
-  });
-}
 
 
 function getThreadDate(threadTimestamp) { // TODO: REFACTOR!!!!
@@ -302,5 +312,4 @@ function getThreadDate(threadTimestamp) { // TODO: REFACTOR!!!!
   Math.floor(timeDifferenceInHours * 60)      + " m" :
   Math.floor(timeDifferenceInHours * 60 * 60) + " s";
 }
-
 
