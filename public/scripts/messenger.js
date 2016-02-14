@@ -47,8 +47,8 @@ var Messenger = React.createClass({
       )
     } else {
       return (
-        <div className="Messenger row text-center">
-          <div className="small-4 columns">
+        <div className="row ">
+          <div className="small-2 columns">
             <ThreadsList/>
           </div>
           <div className="small-8 columns end">
@@ -114,9 +114,9 @@ var FriendsList = React.createClass({
   }
 });
 
-var ThreadParticipantsNames = React.createClass({
+var ThreadParticipants = React.createClass({
   getInitialState: function () {
-    return {data: ['dw', 'ewf']};
+    return {data: [], photos: []};
   },
   loadParticipants: function() {
     var participants = [];
@@ -127,7 +127,13 @@ var ThreadParticipantsNames = React.createClass({
         cache: true,
         success: function (data) {
           for (var k in data) {
-            participants.push(data[k]['name'] + '\n');
+            let participant = {
+              id: k,
+              fullName: data[k]['name'],
+              firstName: data[k]['firstName'],
+              photo:data[k]['thumbSrc']
+            }
+            participants.push(participant);
             this.setState({data: participants});
           }
         }.bind(this),
@@ -140,12 +146,21 @@ var ThreadParticipantsNames = React.createClass({
   componentDidMount: function () {
     this.loadParticipants();
   },
-  render: function() {
+  render: function () {
+    var participants = this.state.data.map(function (participant) {
+      return (
+        <div className="row thread-list-element" key={participant.id}>
+          <p className="small-8 columns thread-list-name">{participant.firstName} </p>
+          <img className="small-4  columns thread-list-photo" src={participant.photo} alt={participant.name + " photo"}/>
+        </div>
+      );
+    });
+
     return (
-      <div>
-        {this.state.data}
+      <div className="threadsList">
+        {participants}
       </div>
-    )
+    );
   }
 });
 
@@ -175,20 +190,8 @@ var ThreadsList = React.createClass({
     var friends = this.state.data.map(function (thread) {
       let time = getThreadDate(thread.timestamp);
       return (
-        <div className="row" key={thread.threadID}>
-          <div className="small-4 columns">
-            <div className="row">
-              <div className="small-4">
-                <img src={"http://blog.webalytics.de/facebook.png"} alt=""/> {/*waiting for api fix */}
-              </div>
-              <div className="small-8">
-                <ThreadParticipantsNames ids={thread.participantIDs}/>
-              </div>
-            </div>
-          </div>
-          <div className="small-4 columns thread-time">
-            <p> {time + " ago"} </p>
-          </div>
+        <div className="row thread" key={thread.threadID}>
+          <ThreadParticipants className="small-2 small-centered columns" ids={thread.participantIDs}/>
         </div>
       );
     });
@@ -301,6 +304,7 @@ ReactDOM.render(
 //    scope: '/'
 //  });
 //}
+
 
 
 

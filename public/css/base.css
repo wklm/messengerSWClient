@@ -11,3 +11,24 @@ body {
 .thread-time {
   font-size: 10px;
 }
+
+
+.thread-list-element {
+  padding-top: .1rem;
+  padding-bottom: .1rem;
+  text-align: right;
+}
+
+.thread-list-photo {
+  border-radius: 50%;
+}
+.thread-list-name {
+  position: relative;
+  margin-top: .5rem;
+}
+
+
+.thread {
+  border-bottom: solid 1px;
+
+}
