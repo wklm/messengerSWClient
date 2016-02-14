@@ -105,7 +105,6 @@ app.get('/api/threads', function (req, res) {
     api.getThreadList(start, end, function (err, data) {
       if (err) return console.error(err);
       res.send(data);
-      console.log(data.length)
     });
   });
 });
@@ -113,6 +112,15 @@ app.get('/api/threads', function (req, res) {
 app.get('/api/getUserByName/:name', function (req, res) {
   messenger({email: email, password: password}, function callback(err, api) {
     api.getUserID(req.params.name, function (err, data) {
+      if (err) return console.error(err);
+      res.send(data);
+    });
+  });
+});
+
+app.get('/api/getUserById/:id', function (req, res) {
+  messenger({email: email, password: password}, function callback(err, api) {
+    api.getUserInfo(req.params.id, function (err, data) {
       if (err) return console.error(err);
       res.send(data);
     });
@@ -137,4 +145,4 @@ app.listen(app.get('port'), function () {
 
 server.listen(3000);
 
-//TODO : prevent multiple logins, getUserInfo
+//TODO : prevent multiple logins

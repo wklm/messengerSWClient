@@ -138,20 +138,22 @@ var ThreadsList = React.createClass({
   render: function () {
     var friends = this.state.data.map(function (thread) {
       var timeDifferenceInHours = (Date.now() - thread.timestamp) / (1000 * 60 * 60);
-      var time =
-        timeDifferenceInHours > 24 ?
-        Math.floor(timeDifferenceInHours / 24) + " days ago" :
-          timeDifferenceInHours / 60 > 1 ?
-          Math.floor(timeDifferenceInHours) + " hours ago" :
-            timeDifferenceInHours * 60 > 1 ?
-            Math.floor(timeDifferenceInHours * 60) + " minutes ago" :
-            Math.floor(timeDifferenceInHours * 60 * 60) + " second ago";
+      var time = timeDifferenceInHours > 24 ? // TODO: REFACTOR!!!!
+      Math.floor(timeDifferenceInHours / 24) + " d ago" :
+        timeDifferenceInHours / 60 > 1 ?
+        Math.floor(timeDifferenceInHours) + " h ago" :
+          timeDifferenceInHours * 60 > 1 ?
+          Math.floor(timeDifferenceInHours * 60) + " m ago" :
+          Math.floor(timeDifferenceInHours * 60 * 60) + " s ago";
       return (
-        <div key={thread.threadID}>
-          <p> {time} </p>
-          <p> {thread.snippetSender} </p>
-          <p> {thread.snippet} </p>
-        </div>
+          <div className="row" key={thread.threadID}>
+            <div className="small-4 columns">
+              <img src={thread.imageSrc} alt=""/>
+            </div>
+            <div className="small-4 columns thread-time">
+              <p> {time} </p>
+            </div>
+          </div>
       );
     });
 
@@ -258,8 +260,8 @@ ReactDOM.render(
   document.getElementById('messenger')
 );
 
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw', {
-    scope: '/'
-  });
-}
+//if ('serviceWorker' in navigator) {
+//  navigator.serviceWorker.register('/sw', {
+//    scope: '/'
+//  });
+//}
