@@ -139,21 +139,28 @@ var ThreadsList = React.createClass({
     var friends = this.state.data.map(function (thread) {
       var timeDifferenceInHours = (Date.now() - thread.timestamp) / (1000 * 60 * 60);
       var time = timeDifferenceInHours > 24 ? // TODO: REFACTOR!!!!
-      Math.floor(timeDifferenceInHours / 24) + " d ago" :
+      Math.floor(timeDifferenceInHours / 24) + " d" :
         timeDifferenceInHours / 60 > 1 ?
-        Math.floor(timeDifferenceInHours) + " h ago" :
+        Math.floor(timeDifferenceInHours) + " h" :
           timeDifferenceInHours * 60 > 1 ?
-          Math.floor(timeDifferenceInHours * 60) + " m ago" :
-          Math.floor(timeDifferenceInHours * 60 * 60) + " s ago";
+          Math.floor(timeDifferenceInHours * 60) + " m" :
+          Math.floor(timeDifferenceInHours * 60 * 60) + " s";
       return (
-          <div className="row" key={thread.threadID}>
-            <div className="small-4 columns">
-              <img src={thread.imageSrc} alt=""/>
-            </div>
-            <div className="small-4 columns thread-time">
-              <p> {time} </p>
+        <div className="row" key={thread.threadID}>
+          <div className="small-4 columns">
+            <div className="row">
+              <div className="small-4">
+                <img src={"http://blog.webalytics.de/facebook.png"} alt=""/> {/*waiting for api fix */}
+              </div>
+              <div className="small-8">
+                <p> {thread.participantIDs} </p>
+              </div>
             </div>
           </div>
+          <div className="small-4 columns thread-time">
+            <p> {time + " ago"} </p>
+          </div>
+        </div>
       );
     });
 

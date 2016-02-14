@@ -14,9 +14,11 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 var email;
 var password;
+var session;
 
 function login(email, password) {
-  messenger({email: email, password: password}, function callback(err) {
+  messenger({email: email, password: password}, function callback(err, api) {
+    session = api.getAppState();
     return err;
   });
 }
@@ -38,7 +40,7 @@ app.get('/api', function (req, res) {
 
 
 app.get('/api/appStatus', function (req, res) {
-  messenger({email: email, password: password}, function callback(err, api) {
+  messenger({appState: session}, function callback(err, api) {
     if (err) return console.error(err);
     res.send(api.getAppState());
   });
@@ -48,7 +50,7 @@ app.get('/api/threads/:threadID/:portion', function (req, res) {
   var start = req.params.portion;
   var end = start + 10;
 
-  messenger({email: email, password: password}, function callback(err, api) {
+  messenger({appState: session}, function callback(err, api) {
     if (err) return console.error(err);
     api.getThreadHistory(req.params.threadID, start, end, null, function (err, data) {
       res.send(data);
@@ -59,7 +61,7 @@ app.get('/api/threads/:threadID/:portion', function (req, res) {
 
 
 app.get('/api/friends', function (req, res) {
-  messenger({email: email, password: password}, function callback(err, api) {
+  messenger({appState: session}, function callback(err, api) {
     api.getFriendsList(function (err, data) {
       if (err) return console.error(err);
       res.send(data);
@@ -68,7 +70,7 @@ app.get('/api/friends', function (req, res) {
 });
 
 app.get('/api/logout', function (req, res) {
-  messenger({email: email, password: password}, function callback(err, api) {
+  messenger({appState: session}, function callback(err, api) {
     api.logout(function (err) {
       if (err) return console.error(err);
       res.send(true);
@@ -77,7 +79,7 @@ app.get('/api/logout', function (req, res) {
 });
 
 app.get('/api/listen', function (req, res) { //socket.io
-  messenger({email: email, password: password}, function callback(err, api) {
+  messenger({appState: session}, function callback(err, api) {
     if (err) return console.error(err);
     api.setOptions({listenEvents: true});
 
@@ -101,7 +103,7 @@ app.get('/api/listen', function (req, res) { //socket.io
 app.get('/api/threads', function (req, res) {
   var start = 0;
   var end = 5;
-  messenger({email: email, password: password}, function callback(err, api) {
+  messenger({appState: session}, function callback(err, api) {
     api.getThreadList(start, end, function (err, data) {
       if (err) return console.error(err);
       res.send(data);
@@ -110,7 +112,7 @@ app.get('/api/threads', function (req, res) {
 });
 
 app.get('/api/getUserByName/:name', function (req, res) {
-  messenger({email: email, password: password}, function callback(err, api) {
+  messenger({appState: session}, function callback(err, api) {
     api.getUserID(req.params.name, function (err, data) {
       if (err) return console.error(err);
       res.send(data);
@@ -119,7 +121,7 @@ app.get('/api/getUserByName/:name', function (req, res) {
 });
 
 app.get('/api/getUserById/:id', function (req, res) {
-  messenger({email: email, password: password}, function callback(err, api) {
+  messenger({appState: session}, function callback(err, api) {
     api.getUserInfo(req.params.id, function (err, data) {
       if (err) return console.error(err);
       res.send(data);
@@ -145,4 +147,3 @@ app.listen(app.get('port'), function () {
 
 server.listen(3000);
 
-//TODO : prevent multiple logins
