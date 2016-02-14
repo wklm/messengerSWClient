@@ -131,20 +131,21 @@ var ThreadsList = React.createClass({
       }.bind(this)
     });
   },
+
   componentDidMount: function () {
     this.loadFriendsList();
   },
 
   render: function () {
     var friends = this.state.data.map(function (thread) {
-      var timeDifferenceInHours = (Date.now() - thread.timestamp) / (1000 * 60 * 60);
-      var time = timeDifferenceInHours > 24 ? // TODO: REFACTOR!!!!
-      Math.floor(timeDifferenceInHours / 24) + " d" :
-        timeDifferenceInHours / 60 > 1 ?
-        Math.floor(timeDifferenceInHours) + " h" :
-          timeDifferenceInHours * 60 > 1 ?
-          Math.floor(timeDifferenceInHours * 60) + " m" :
-          Math.floor(timeDifferenceInHours * 60 * 60) + " s";
+      let time = getThreadDate(thread.timestamp);
+
+      console.log(thread.participantIDs);
+      for (var i in thread.participantIDs) {
+        getProfile(thread.participantIDs[i]);
+      }
+
+
       return (
         <div className="row" key={thread.threadID}>
           <div className="small-4 columns">
@@ -153,7 +154,7 @@ var ThreadsList = React.createClass({
                 <img src={"http://blog.webalytics.de/facebook.png"} alt=""/> {/*waiting for api fix */}
               </div>
               <div className="small-8">
-                <p> {thread.participantIDs} </p>
+                <p> {} </p>
               </div>
             </div>
           </div>
@@ -185,7 +186,7 @@ var AppStatus = React.createClass({
         this.setState({data: data})
       }.bind(this),
       error: function (xhr, status, err) {
-        console.error('api/login', status, err.toString());
+        console.error('api/login', status, err);
       }.bind(this)
     });
   },
@@ -266,9 +267,40 @@ ReactDOM.render(
   <Messenger />,
   document.getElementById('messenger')
 );
-
+//
 //if ('serviceWorker' in navigator) {
 //  navigator.serviceWorker.register('/sw', {
 //    scope: '/'
 //  });
 //}
+
+function getProfile(id) {
+  console.log(id);
+  $.ajax({
+    url: '/api/getUserById/' + id,
+    dataType: 'json',
+    cache: true,
+    success: function (data) {
+      for (var k in data) {
+        for (var l in data[k]) {
+          console.log(l + ": " + data[k][l]);
+        }
+      }
+    }.bind(this),
+    error: function (xhr, status, err) {
+      console.error('api/threads', status, err.toString());
+    }.bind(this)
+  });
+}
+
+
+function getThreadDate(threadTimestamp) { // TODO: REFACTOR!!!!
+  var timeDifferenceInHours = (Date.now() - threadTimestamp) / (1000 * 60 * 60);
+  return timeDifferenceInHours > 24 ?
+  Math.floor(timeDifferenceInHours / 24)      + " d" : timeDifferenceInHours / 60 > 1 ?
+  Math.floor(timeDifferenceInHours)           + " h" : timeDifferenceInHours * 60 > 1 ?
+  Math.floor(timeDifferenceInHours * 60)      + " m" :
+  Math.floor(timeDifferenceInHours * 60 * 60) + " s";
+}
+
+
