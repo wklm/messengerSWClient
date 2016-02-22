@@ -47,13 +47,8 @@ var Messenger = React.createClass({
       )
     } else {
       return (
-        <div className="row ">
-          <div className="small-2 columns">
-            <ThreadsList/>
-          </div>
-          <div className="small-8 columns end">
-            <Thread/>
-          </div>
+        <div className="row">
+          <ThreadsList/>
         </div>
       )
     }
@@ -61,11 +56,80 @@ var Messenger = React.createClass({
 });
 
 var Thread = React.createClass({
+  getInitialState: function () {
+    return {init: true, threadsCache: []};
+  },
+
+  componentWillReceiveProps: function (nextProp) {
+    this.loadThread(nextProp.currentThread, 1);
+  },
+
+  sendMessage: function (thread, message) {
+    $.ajax({
+      url: '/api/sendMessage/' + thread + '/' + message,
+      dataType: 'json',
+      cache: true,
+      success: function (data) {
+        console.log("ok");
+      }.bind(this),
+      error: function (xhr, status, err) {
+        console.error('api/threads', status, err.toString());
+      }.bind(this)
+    })
+  },
+
+  loadThread: function (thread, portion) {
+    var threads = [];
+    $.ajax({
+      url: '/api/threads/' + thread + '/' + portion,
+      dataType: 'json',
+      cache: true,
+      success: function (data) {
+        for (var k in data) {
+          let thread = {
+            id: k,
+            senderName: data[k]['senderName'],
+            body: data[k]['body'],
+            date: data[k]['timestampDatetime'],
+            timestamp: data[k]['timestamp']
+          }
+          threads.push(thread);
+          this.setState({
+            threadsCache: threads
+          })
+        }
+      }.bind(this),
+      error: function (xhr, status, err) {
+        this.state.init ?
+          this.setState({
+            init: false
+          }) :
+          console.error('/api/threads/' + thread + '/' + portion, status, err.toString());
+      }.bind(this)
+    });
+  },
   render: function () {
+    var messages = this.state.threadsCache.map(message => {
+      return (
+        <li className="row" key={message.id}>
+          <div className="message-sender small-4 columns">
+            {message.senderName}
+          </div>
+          <div className="message-body small-6 columns">
+            {message.body}
+          </div>
+          <div className="message-time small-2 columns">
+            {getTimePassed(message.timestamp)}
+          </div>
+        </li>
+      )
+    })
     return (
       <div>
-        <p className="right"> lalala </p>
-        <ul id="messages"></ul>
+        <h1 className="right"> {this.props.currentThread} </h1>
+        <ul className="messages inline-list uiScrollableArea">
+          {messages}
+        </ul>
         <form action="">
           <input id="m" autoComplete="off"/>
           <button>Send</button>
@@ -73,42 +137,44 @@ var Thread = React.createClass({
       </div>
     )
   }
-})
+});
 
-var FriendsList = React.createClass({
+var LoginForm = React.createClass({
   getInitialState: function () {
-    return {data: []};
+    return {email: '', password: ''};
   },
-  loadFriendsList: function () {
-    $.ajax({
-      url: '/api/friends',
-      dataType: 'json',
-      cache: true,
-      success: function (data) {
-        this.setState({data: data});
-        console.log(data);
-      }.bind(this),
-      error: function (xhr, status, err) {
-        console.error('api/friends', status, err.toString());
-      }.bind(this)
-    });
+  handleEmailChange: function (e) {
+    this.setState({email: e.target.value});
   },
-  componentDidMount: function () {
-    this.loadFriendsList();
+  handlePasswordChange: function (e) {
+    this.setState({password: e.target.value});
   },
-
+  handleSubmit: function (e) {
+    e.preventDefault();
+    var email = this.state.email.trim();
+    var password = this.state.password.trim();
+    if (!email || !password) return;
+    this.props.onLogin({email: email, password: password});
+    this.setState({email: '', password: ''});
+  },
   render: function () {
-    var friends = this.state.data.map(function (friend) {
-      return (
-        <div key={friend.userID}>
-          <img src={friend.profilePicture} alt=""/>
-          <p> {friend.firstName} </p>
-        </div>
-      );
-    });
     return (
-      <div className="commentList">
-        {friends}
+      <div className="row">
+        <form className="loginForm small-4 columns" onSubmit={this.handleSubmit}>
+          <input
+            type="text"
+            placeholder="your email"
+            value={this.state.email}
+            onChange={this.handleEmailChange}
+          />
+          <input
+            type="password"
+            placeholder="password"
+            value={this.state.password}
+            onChange={this.handlePasswordChange}
+          />
+          <input type="submit" value="login"/>
+        </form>
       </div>
     );
   }
@@ -118,7 +184,7 @@ var ThreadParticipants = React.createClass({
   getInitialState: function () {
     return {data: [], photos: []};
   },
-  loadParticipants: function() {
+  loadParticipants: function () {
     var participants = [];
     for (var id in this.props.ids) {
       $.ajax({
@@ -131,10 +197,12 @@ var ThreadParticipants = React.createClass({
               id: k,
               fullName: data[k]['name'],
               firstName: data[k]['firstName'],
-              photo:data[k]['thumbSrc']
+              photo: data[k]['thumbSrc']
             }
             participants.push(participant);
-            this.setState({data: participants});
+            this.setState({
+              data: participants
+            });
           }
         }.bind(this),
         error: function (xhr, status, err) {
@@ -147,11 +215,14 @@ var ThreadParticipants = React.createClass({
     this.loadParticipants();
   },
   render: function () {
-    var participants = this.state.data.map(function (participant) {
+    var participants = this.state.data.map(participant => {
       return (
-        <div className="row thread-list-element" key={participant.id}>
-          <p className="small-8 columns thread-list-name">{participant.firstName} </p>
-          <img className="small-4  columns thread-list-photo" src={participant.photo} alt={participant.name + " photo"}/>
+        <div onClick={this.props.a.bind(null,this.props.b)} className="row thread-list-element" key={participant.id}>
+          <p className="small-8 columns thread-list-name">
+            {participant.firstName}
+          </p>
+          <img className="small-4  columns thread-list-photo" src={participant.photo}
+               alt={participant.name + " photo"}/>
         </div>
       );
     });
@@ -166,9 +237,9 @@ var ThreadParticipants = React.createClass({
 
 var ThreadsList = React.createClass({
   getInitialState: function () {
-    return {data: []};
+    return {data: [], currentThread: null};
   },
-  loadFriendsList: function () {
+  loadThreadsList: function () {
     $.ajax({
       url: '/api/threads',
       dataType: 'json',
@@ -183,22 +254,36 @@ var ThreadsList = React.createClass({
   },
 
   componentDidMount: function () {
-    this.loadFriendsList();
+    this.loadThreadsList();
+  },
+  updateCurrentThread: function (thread) {
+    this.setState({
+      currentThread: thread
+    })
   },
 
+
   render: function () {
-    var friends = this.state.data.map(function (thread) {
-      let time = getThreadDate(thread.timestamp);
+    var threads = this.state.data.map(thread => {
+      var updateCurrentThread = this.updateCurrentThread;
+      let time = getTimePassed(thread.timestamp);
       return (
         <div className="row thread" key={thread.threadID}>
-          <ThreadParticipants className="small-2 small-centered columns" ids={thread.participantIDs}/>
+          <ThreadParticipants a={updateCurrentThread} b={thread.threadID} className="small-2 small-centered columns"
+                              ids={thread.participantIDs}/>
         </div>
       );
-    });
-
+    })
     return (
-      <div className="threadsList">
-        {friends}
+      <div>
+        <div className="small-3 columns ">
+          <div className="threadsList">
+            {threads}
+          </div>
+        </div>
+        <div className="small-5 columns end">
+          <Thread currentThread={this.state.currentThread}/>
+        </div>
       </div>
     );
   }
@@ -253,42 +338,39 @@ var SessionData = React.createClass({
   }
 });
 
-var LoginForm = React.createClass({
+var FriendsList = React.createClass({
   getInitialState: function () {
-    return {email: '', password: ''};
+    return {data: []};
   },
-  handleEmailChange: function (e) {
-    this.setState({email: e.target.value});
+  loadFriendsList: function () {
+    $.ajax({
+      url: '/api/friends',
+      dataType: 'json',
+      cache: true,
+      success: function (data) {
+        this.setState({data: data});
+      }.bind(this),
+      error: function (xhr, status, err) {
+        console.error('api/friends', status, err.toString());
+      }.bind(this)
+    });
   },
-  handlePasswordChange: function (e) {
-    this.setState({password: e.target.value});
+  componentDidMount: function () {
+    this.loadFriendsList();
   },
-  handleSubmit: function (e) {
-    e.preventDefault();
-    var email = this.state.email.trim();
-    var password = this.state.password.trim();
-    if (!email || !password) return;
-    this.props.onLogin({email: email, password: password});
-    this.setState({email: '', password: ''});
-  },
+
   render: function () {
+    var friends = this.state.data.map(function (friend) {
+      return (
+        <div key={friend.userID}>
+          <img src={friend.profilePicture} alt=""/>
+          <p> {friend.firstName} </p>
+        </div>
+      );
+    });
     return (
-      <div className="row">
-        <form className="loginForm small-4 columns" onSubmit={this.handleSubmit}>
-          <input
-            type="text"
-            placeholder="your email"
-            value={this.state.email}
-            onChange={this.handleEmailChange}
-          />
-          <input
-            type="password"
-            placeholder="password"
-            value={this.state.password}
-            onChange={this.handlePasswordChange}
-          />
-          <input type="submit" value="login"/>
-        </form>
+      <div className="commentList">
+        {friends}
       </div>
     );
   }
@@ -306,14 +388,12 @@ ReactDOM.render(
 //}
 
 
-
-
-function getThreadDate(threadTimestamp) { // TODO: REFACTOR!!!!
+function getTimePassed(threadTimestamp) { // TODO: REFACTOR!!!!
   var timeDifferenceInHours = (Date.now() - threadTimestamp) / (1000 * 60 * 60);
   return timeDifferenceInHours > 24 ?
-  Math.floor(timeDifferenceInHours / 24)      + " d" : timeDifferenceInHours / 60 > 1 ?
-  Math.floor(timeDifferenceInHours)           + " h" : timeDifferenceInHours * 60 > 1 ?
-  Math.floor(timeDifferenceInHours * 60)      + " m" :
+  Math.floor(timeDifferenceInHours / 24) + " d" : timeDifferenceInHours / 60 > 1 ?
+  Math.floor(timeDifferenceInHours) + " h" : timeDifferenceInHours * 60 > 1 ?
+  Math.floor(timeDifferenceInHours * 60) + " m" :
   Math.floor(timeDifferenceInHours * 60 * 60) + " s";
 }
 

@@ -71,8 +71,16 @@ app.get('/api/friends', function (req, res) {
   });
 });
 
+app.get('/api/sendMessage/:threadID:/:msg', function (req, res) {
+  messenger({appState: apiSession}, function callback(err, api) {
+    if (err) return console.error(err);
+    api.sendMessage(req.params.msg, req.params.threadID);
+  });
+});
+
 app.get('/api/logout', function (req, res) {
   messenger({appState: apiSession}, function callback(err, api) {
+    if (err) return console.error(err);
     api.logout(function (err) {
       if (err) return console.error(err);
       res.send(true);
@@ -104,7 +112,7 @@ app.get('/api/listen', function (req, res) { //socket.io
 
 app.get('/api/threads', function (req, res) {
   var start = 0;
-  var end = 1000;
+  var end = 5;
   messenger({appState: apiSession}, function callback(err, api) {
     api.getThreadList(start, end, function (err, data) {
       if (err) return console.error(err);
