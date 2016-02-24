@@ -27,7 +27,13 @@ function login(email, password) {
 
 io.on('connection', function(socket){
   socket.on('chat message', function(msg){
-    console.log('message: ' + msg);
+    message = JSON.parse(msg);
+    messenger({appState: apiSession}, function callback(err, api) {
+      if (err) return console.error(err);
+      if (message['body'] && message['thread']) {
+        api.sendMessage(message['body'], message['thread']);
+      }
+    });
   });
 });
 

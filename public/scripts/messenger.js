@@ -25,17 +25,6 @@ var Messenger = React.createClass({
     localStorage.setItem('auth', false);
   },
 
-  componentDidMount: function () {
-    var socket = io.connect('localhost:3000'); // TODO: ENVS!
-    $('form').submit(function () {
-      socket.emit('chat message', $('#m').val());
-      $('#m').val('');
-      return false;
-    });
-    socket.on('chat message', function (msg) {
-      $('#messages').append($('<li>').text(msg));
-    });
-  },
 
   render: function () {
     if (!this.state.authenticated) {
@@ -62,20 +51,23 @@ var Thread = React.createClass({
 
   componentWillReceiveProps: function (nextProp) {
     this.loadThread(nextProp.currentThread, 1);
-  },
 
-  sendMessage: function (thread, message) {
-    $.ajax({
-      url: '/api/sendMessage/' + thread + '/' + message,
-      dataType: 'json',
-      cache: true,
-      success: function (data) {
-        console.log("ok");
-      }.bind(this),
-      error: function (xhr, status, err) {
-        console.error('api/threads', status, err.toString());
-      }.bind(this)
-    })
+    var socket = io.connect('localhost:3000'); // TODO: ENVS!
+
+    $('form').submit(function () {
+      if ($('#m').val() && nextProp.currentThread) {
+        let message = {
+          body: $('#m').val(),
+          thread: nextProp.currentThread
+        }
+        socket.emit('chat message', JSON.stringify(message));
+        return true;
+      }
+      return false;
+    });
+    //socket.on('chat message', function (msg) {
+    //  $('#messages').append($('<li>').text(msg));
+    //});
   },
 
   loadThread: function (thread, portion) {
@@ -381,11 +373,12 @@ ReactDOM.render(
   document.getElementById('messenger')
 );
 //
-//if ('serviceWorker' in navigator) {
-//  navigator.serviceWorker.register('/sw', {
-//    scope: '/'
-//  });
-//}
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw', {
+    scope: '/'
+  });
+
+}
 
 
 function getTimePassed(threadTimestamp) { // TODO: REFACTOR!!!!
