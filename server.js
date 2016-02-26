@@ -6,8 +6,16 @@ var server = http.createServer(app);
 var io = require('socket.io').listen(server);
 var bodyParser = require('body-parser');
 var messenger = require('facebook-chat-api');
-// var expressSession = require('express-session');
-//TODO: session handling | https://github.com/expressjs/session
+ var session = require('express-session');
+//TODO: session handling |
+
+app.set('trust proxy', 1) // trust first proxy
+app.use(session({
+  secret: 'keyboard cat',
+  resave: false,
+  saveUninitialized: true,
+  cookie: { secure: true }
+}))
 
 app.use(require('express-promise')());
 app.use('/', express.static(path.join(__dirname, 'public')));
@@ -158,6 +166,9 @@ app.get('/css', function (req, res) {
 
 app.get('/react', function (req, res) {
   res.sendFile(path.join(__dirname + '/public/scripts/messenger.js'));
+});
+app.get('/sw-toolbox', function (req, res) {
+  res.sendFile(path.join(__dirname + '/bower_components/sw-toolbox/sw-toolbox.js'));
 });
 
 app.listen(app.get('port'), function () {

@@ -396,12 +396,11 @@ ReactDOM.render(
   document.getElementById('messenger')
 );
 //
-//if ('serviceWorker' in navigator) {
-//  navigator.serviceWorker.register('/sw', {
-//    scope: '/'
-//  });
-//
-//}
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw', {
+    scope: '/'
+  });
+}
 
 
 function getTimePassed(threadTimestamp) { // TODO: REFACTOR!!!!
