@@ -6,8 +6,18 @@ var server = http.createServer(app);
 var io = require('socket.io').listen(server);
 var bodyParser = require('body-parser');
 var messenger = require('facebook-chat-api');
- var session = require('express-session');
-//TODO: session handling |
+var session = require('express-session');
+var redis   = require("redis");
+var redisStore = require('connect-redis')(session);
+var client  = redis.createClient();
+
+
+app.use(session({
+  secret: 'ssshhhhh',
+  store: new redisStore({ host: 'localhost', port: 6379, client: client,ttl :  260}),
+  saveUninitialized: false,
+  resave: false
+}));
 
 app.set('trust proxy', 1) // trust first proxy
 app.use(session({
