@@ -1,69 +1,78 @@
 body {
-  font-family: "Helvetica Neue", "Segoe UI", Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  line-height: 1;
-  line-height: 1;
-  margin: 0;
-  padding: 1rem;
-  max-height: 100%;
-  position: fixed;
+    font-family: "Helvetica Neue", "Segoe UI", Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    line-height: 1;
+    line-height: 1;
+    margin: 0;
+    padding: 1rem;
+    max-height: 100%;
+    position: fixed;
 }
 
-
 .thread-time {
-  font-size: 10px;
+    font-size: 10px;
 }
 
 .thread-container {
-  overflow: scroll;
-  display: inline-flex;
-  height: 100%;
-  position: fixed;
+    overflow: scroll;
+    display: inline-flex;
+    height: 100%;
+    position: fixed;
 }
 
-
 .thread-list-element {
-  padding-top: .1rem;
-  padding-bottom: .1rem;
-  text-align: right;
+    padding-top: .1rem;
+    padding-bottom: .1rem;
+    text-align: right;
 }
 
 .thread-list-photo {
-  border-radius: 50%;
-}
-.thread-list-name {
-  position: relative;
-  margin-top: .5rem;
+    border-radius: 50%;
 }
 
+.thread-list-name {
+    position: relative;
+    margin-top: .5rem;
+}
 
 .thread {
-  border-bottom: solid 1px;
+    border-bottom: solid 1px;
 
 }
 
 /* Message */
 
+
+
 .messages {
-  list-style: none;
-  overflow: scroll;
-  scroll-behavior: smooth;
+    list-style: none;
+    overflow: scroll;
+    scroll-behavior: smooth;
 }
+
 .message-sender {
-  color: dimgray;
+    color: dimgray;
 }
+
 .message-body {
-  background: tomato;
-  color: lightgrey;
+    background: tomato;
+    color: white;
+    word-wrap: break-word;
+
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+    text-align: center;
+    height: 100%;
 }
 
 .message-time {
-  font-size: 50%;
+    /*font-size: 50%;*/
 }
 
 .uiScrollableArea {
-  direction:ltr;
-  height:100%;
-  overflow:hidden;
-  position:relative
+    direction: ltr;
+    height: 100%;
+    overflow: hidden;
+    position: relative
 }

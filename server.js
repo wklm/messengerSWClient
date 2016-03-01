@@ -7,14 +7,14 @@ var io = require('socket.io').listen(server);
 var bodyParser = require('body-parser');
 var messenger = require('facebook-chat-api');
 var session = require('express-session');
-var redis   = require("redis");
+var redis = require("redis");
 var redisStore = require('connect-redis')(session);
-var client  = redis.createClient();
+var client = redis.createClient();
 
 
 app.use(session({
   secret: 'ssshhhhh',
-  store: new redisStore({ host: 'localhost', port: 6379, client: client,ttl :  260}),
+  store: new redisStore({host: 'localhost', port: 6379, client: client, ttl: 260}),
   saveUninitialized: false,
   resave: false
 }));
@@ -24,7 +24,7 @@ app.use(session({
   secret: 'keyboard cat',
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: true }
+  cookie: {secure: true}
 }))
 
 app.use(require('express-promise')());
@@ -94,32 +94,31 @@ app.get('/api/friends', function (req, res) {
 
 app.get('/api/listen/:state', function (req, res) { //TODO: Prevent multiple socket instances
   var stopListening = null;
-    messenger({appState: apiSession}, function callback(err, api) {
+  messenger({appState: apiSession}, function callback(err, api) {
+    if (err) return console.error(err);
+    stopListening = api.listen(function (err, event) {
       if (err) return console.error(err);
-      stopListening = api.listen(function (err, event) {
-        if (err) return console.error(err);
-        if (req.params.state === 'on') {
-          console.log("on");
-          if (event.body && event.threadID) {
-            var message = {
-              body: event.body,
-              thread: event.threadID
-            }
-            io.emit('chat message incoming', JSON.stringify(message));
-            console.log(message['body'] + " " + message['thread']);
-            event = null;
-            message = null;
+      if (req.params.state === 'on') {
+        console.log("on");
+        if (event.body && event.threadID) {
+          var message = {
+            body: event.body,
+            thread: event.threadID
           }
+          io.emit('chat message incoming', JSON.stringify(message));
+          console.log(message['body'] + " " + message['thread']);
+          event = null;
+          message = null;
         }
-        else if (req.params.state === 'off') {
-          console.log("off");
-          return stopListening();
-        }
-      });
-    })
+      }
+      else if (req.params.state === 'off') {
+        console.log("off");
+        return stopListening();
+      }
+    });
+  })
   stopListening = null;
 });
-
 
 
 app.get('/api/logout', function (req, res) {

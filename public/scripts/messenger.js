@@ -38,9 +38,7 @@ var Messenger = React.createClass({
       )
     } else {
       return (
-        <div className="row">
           <ThreadsList/>
-        </div>
       )
     }
   }
@@ -73,7 +71,7 @@ var Thread = React.createClass({
 
   loadThread: function (thread, portion) {
     var threads = [];
-    if(thread && portion) {
+    if (thread && portion) {
       $.ajax({
         url: '/api/threads/' + thread + '/' + portion,
         dataType: 'json',
@@ -107,27 +105,25 @@ var Thread = React.createClass({
     var messages = this.state.threadsCache.map(message => {
       return (
         <li className="row" key={message.id}>
-          <div className="message-sender small-4 columns">
+          <p className="message-sender small-1 large-2 columns">
             {message.senderName}
-          </div>
-          <div className="message-body small-6 columns">
+          </p>
+          <p className="message-body small-5 medium-7 large-9 columns">
             {message.body}
-          </div>
-          <div className="message-time small-2 columns">
+          </p>
+          <p className="message-time small-2 large-1 columns">
             {getTimePassed(message.timestamp)}
-          </div>
+          </p>
         </li>
       )
     })
     return (
       <div>
-        <h1 className="right"> {this.props.currentThread} </h1>
         <ul className="messages inline-list uiScrollableArea">
           {messages}
         </ul>
-        <form action="">
-          <input id="m" autoComplete="off"/>
-          <button>Send</button>
+        <form className="row" action="">
+          <input className="small-12 columns" id="m" autoComplete="off" placeholder="input new message"/>
         </form>
       </div>
     )
@@ -235,7 +231,7 @@ var ThreadsList = React.createClass({
     this.incomingMessagesListenerHandler('on');
     return {data: [], currentThread: null, newMessageArrived: false};
   },
-  incomingMessagesListenerHandler: function(state) {
+  incomingMessagesListenerHandler: function (state) {
     $.ajax({
       url: '/api/listen/' + state,
       success: function (data) {
@@ -263,8 +259,8 @@ var ThreadsList = React.createClass({
 
   componentDidMount: function () {
     this.loadThreadsList();
-    socket.on('chat message incoming', function(msg){
-      console.log((JSON.parse(msg)['body'] + "  " +  JSON.parse(msg)['thread']));
+    socket.on('chat message incoming', function (msg) {
+      console.log((JSON.parse(msg)['body'] + "  " + JSON.parse(msg)['thread']));
     });
   },
 
@@ -291,12 +287,12 @@ var ThreadsList = React.createClass({
     })
     return (
       <div>
-        <div className="small-12 columns ">
+        <div className=" columns ">
           <div className="threadsList">
             {threads}
           </div>
         </div>
-        <div className="small-6 thread-container columns end">
+        <div className="thread-container columns end">
           <Thread currentThread={this.state.currentThread}/>
         </div>
       </div>
@@ -396,11 +392,11 @@ ReactDOM.render(
   document.getElementById('messenger')
 );
 //
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/sw', {
-    scope: '/'
-  });
-}
+//if ('serviceWorker' in navigator) {
+//  navigator.serviceWorker.register('/sw', {
+//    scope: '/'
+//  });
+//}
 
 
 function getTimePassed(threadTimestamp) { // TODO: REFACTOR!!!!
