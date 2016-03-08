@@ -10,7 +10,7 @@ var session = require('express-session');
 var cookieParser = require('cookie-parser');
 
 app.use(cookieParser());
-app.use(expressSession({secret:'veryverysecrettoken'}));
+//app.use(expressSession({secret:'veryverysecrettoken'}));
 app.use(require('express-promise')());
 app.use('/', express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
@@ -55,8 +55,8 @@ app.get('/api/appStatus', function (req, res) {
 });
 
 app.get('/api/threads/:threadID/:portion', function (req, res) {
-  var start = req.params.portion;
-  var end = start + 10;
+  var start = 0;
+  var end = 10;
 
   messenger({appState: apiSession}, function callback(err, api) {
     if (err) return console.error(err);

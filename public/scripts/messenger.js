@@ -2,7 +2,7 @@ var socket = io.connect('localhost:3000'); // TODO: ENVS!
 
 var Messenger = React.createClass({
   getInitialState: function () {
-    return {authenticated: localStorage.getItem('auth') === 'false'};
+    return {authenticated: localStorage.getItem('auth') === 'false'}; //TODO: REFACTOR!
   },
 
   handleLogin: function (credentials) {
@@ -50,16 +50,18 @@ var Thread = React.createClass({
   },
 
   componentWillReceiveProps: function (nextProp) {
-    this.loadThread(nextProp.currentThread, 1);
+    var thread = nextProp.currentThread;
+    this.loadThread(thread, 1);
 
     $('form').submit(function () {
-      if ($('#m').val() && nextProp.currentThread) {
+      if ($('#m').val() && thread) {
         let message = {
           body: $('#m').val(),
-          thread: nextProp.currentThread
+          thread: thread
         }
         socket.emit('chat message outgoing', JSON.stringify(message));
         this.reset();
+        thread = null;
         return true;
       }
       return false;
