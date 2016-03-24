@@ -49,20 +49,25 @@ var Thread = React.createClass({
     return {
       init: true,
       threadsCache: [],
-      currentThread: null
+      currentThread: null,
+      lastMessage: null
     }
   },
 
   handleSubmit: function (e) {
     e.preventDefault();
     if (this.state.currentThread) {
-      let message = {
+      var message = {
         body: $('#' + this.state.currentThread).val(),
         thread: this.state.currentThread
       }
       socket.emit('chat message outgoing', JSON.stringify(message));
       $('#' + this.state.currentThread).val("");
     }
+    this.setState({
+      lastMessage: message
+    })
+    message = null;
   },
 
   componentWillReceiveProps: function (nextProp) {
@@ -75,6 +80,11 @@ var Thread = React.createClass({
     //socket.on('chat message', function (msg) {
     //  $('#messages').append($('<li>').text(msg));
     //});
+  },
+
+  shouldComponentUpdate: function () {
+    this.loadThread(this.state.currentThread, 1);
+    return true;
   },
 
   loadThread: function (thread, portion) {
