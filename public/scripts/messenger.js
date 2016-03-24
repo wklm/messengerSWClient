@@ -38,7 +38,7 @@ var Messenger = React.createClass({
       )
     } else {
       return (
-          <ThreadsList/>
+        <ThreadsList/>
       )
     }
   }
@@ -46,26 +46,32 @@ var Messenger = React.createClass({
 
 var Thread = React.createClass({
   getInitialState: function () {
-    return {init: true, threadsCache: []};
+    return {
+      init: true,
+      threadsCache: [],
+      currentThread: null
+    }
+  },
+
+  handleSubmit: function (e) {
+    e.preventDefault();
+    if (this.state.currentThread) {
+      let message = {
+        body: $('#' + this.state.currentThread).val(),
+        thread: this.state.currentThread
+      }
+      socket.emit('chat message outgoing', JSON.stringify(message));
+      $('#' + this.state.currentThread).val("");
+    }
   },
 
   componentWillReceiveProps: function (nextProp) {
-    var thread = nextProp.currentThread;
-    this.loadThread(thread, 1);
+    this.loadThread(nextProp.currentThread, 1);
 
-    $('form').submit(function () {
-      if ($('#m').val() && thread) {
-        let message = {
-          body: $('#m').val(),
-          thread: thread
-        }
-        socket.emit('chat message outgoing', JSON.stringify(message));
-        this.reset();
-        thread = null;
-        return true;
-      }
-      return false;
-    });
+    this.setState({
+      currentThread: nextProp.currentThread
+    })
+
     //socket.on('chat message', function (msg) {
     //  $('#messages').append($('<li>').text(msg));
     //});
@@ -119,14 +125,21 @@ var Thread = React.createClass({
         </li>
       )
     })
-    return (
+    if (this.state.currentThread)
+      return (
+        <div>
+          <ul className="messages inline-list uiScrollableArea">
+            {messages}
+          </ul>
+          <form onSubmit={this.handleSubmit} className="row" action="">
+            <input className="small-12 columns" id={this.state.currentThread} autoComplete="off"
+                   placeholder="input new message"/>
+          </form>
+        </div>
+      )
+    else return (
       <div>
-        <ul className="messages inline-list uiScrollableArea">
-          {messages}
-        </ul>
-        <form className="row" action="">
-          <input className="small-12 columns" id="m" autoComplete="off" placeholder="input new message"/>
-        </form>
+        {"choose a thread to display"}
       </div>
     )
   }
