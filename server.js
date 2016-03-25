@@ -149,6 +149,7 @@ app.get('/api/getUserById/:id', function (req, res) {
   });
 });
 
+
 app.get('/sw', function (req, res) {
   res.sendFile(path.join(__dirname + '/public/scripts/serviceWorker.js'));
 });

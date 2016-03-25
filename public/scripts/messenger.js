@@ -82,10 +82,10 @@ var Thread = React.createClass({
     //});
   },
 
-  shouldComponentUpdate: function () {
-    this.loadThread(this.state.currentThread, 1);
-    return true;
-  },
+  //shouldComponentUpdate: function () {
+  //  this.loadThread(this.state.currentThread, 1);
+  //  return true;
+  //},
 
   loadThread: function (thread, portion) {
     var threads = [];
@@ -424,12 +424,38 @@ ReactDOM.render(
 //}
 
 
-function getTimePassed(threadTimestamp) { // TODO: REFACTOR!!!!
-  var timeDifferenceInHours = (Date.now() - threadTimestamp) / (1000 * 60 * 60);
-  return timeDifferenceInHours > 24 ?
-  Math.floor(timeDifferenceInHours / 24) + " d" : timeDifferenceInHours / 60 > 1 ?
-  Math.floor(timeDifferenceInHours) + " h" : timeDifferenceInHours * 60 > 1 ?
-  Math.floor(timeDifferenceInHours * 60) + " m" :
-  Math.floor(timeDifferenceInHours * 60 * 60) + " s";
+function getTimePassed(threadTimestamp) {
+
+  var elapsed = Date.now() - threadTimestamp;
+
+  var msPerMinute = 60 * 1000;
+  var msPerHour = msPerMinute * 60;
+  var msPerDay = msPerHour * 24;
+  var msPerMonth = msPerDay * 30;
+  var msPerYear = msPerDay * 365;
+
+  if (elapsed < msPerMinute) {
+    return Math.round(elapsed/1000) + ' s';
+  }
+
+  else if (elapsed < msPerHour) {
+    return Math.round(elapsed/msPerMinute) + ' m';
+  }
+
+  else if (elapsed < msPerDay ) {
+    return Math.round(elapsed/msPerHour ) + ' h';
+  }
+
+  else if (elapsed < msPerMonth) {
+    return Math.round(elapsed/msPerDay) + ' d';
+  }
+
+  else if (elapsed < msPerYear) {
+    return Math.round(elapsed/msPerMonth) + ' mo';
+  }
+
+  else {
+    return Math.round(elapsed/msPerYear ) + ' Y';
+  }
 }
 

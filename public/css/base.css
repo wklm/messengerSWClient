@@ -58,7 +58,7 @@ body {
     background: tomato;
     color: white;
     word-wrap: break-word;
-
+    border-radius: 1rem;
     margin-left: auto;
     margin-right: auto;
     display: block;
@@ -67,7 +67,7 @@ body {
 }
 
 .message-time {
-    /*font-size: 50%;*/
+    font-size: 10px;
 }
 
 .uiScrollableArea {
