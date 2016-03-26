@@ -46,6 +46,12 @@ app.get('/api', function (req, res) {
   login(email, password) ? res.send(false) : res.send(true);
 });
 
+app.get('/api/currentUserID', function (req, res) {
+  messenger({appState: apiSession}, function callback(err, api) {
+    if (err) return console.error(err);
+    res.send(api.getCurrentUserID());
+  });
+});
 
 app.get('/api/appStatus', function (req, res) {
   messenger({appState: apiSession}, function callback(err, api) {

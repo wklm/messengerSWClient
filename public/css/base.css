@@ -76,3 +76,12 @@ body {
     overflow: hidden;
     position: relative
 }
+
+
+.me {
+    color: red;
+}
+
+.friend {
+    color: green;
+}
