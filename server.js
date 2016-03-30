@@ -82,14 +82,10 @@ app.get('/api/friends', function (req, res) {
   });
 });
 
-app.get('/api/listen/:state', function (req, res) { //TODO: Prevent multiple socket instances
-  var stopListening = null;
+app.get('/api/listen', function (req, res) { //TODO: Prevent multiple socket instances
   messenger({appState: apiSession}, function callback(err, api) {
     if (err) return console.error(err);
-    stopListening = api.listen(function (err, event) {
-      if (err) return console.error(err);
-      if (req.params.state === 'on') {
-        console.log("on");
+    var stopListening = api.listen(function (err, event) {
         if (event.body && event.threadID) {
           var message = {
             body: event.body,
@@ -97,17 +93,9 @@ app.get('/api/listen/:state', function (req, res) { //TODO: Prevent multiple soc
           }
           io.emit('chat message incoming', JSON.stringify(message));
           console.log(message['body'] + " " + message['thread']);
-          event = null;
-          message = null;
         }
-      }
-      else if (req.params.state === 'off') {
-        console.log("off");
-        return stopListening();
-      }
     });
   })
-  stopListening = null;
 });
 
 
@@ -121,9 +109,9 @@ app.get('/api/logout', function (req, res) {
   });
 });
 
-app.get('/api/threads', function (req, res) {
-  var start = 0;
-  var end = 5;
+app.get('/api/threads/:portion', function (req, res) {
+  var start = req.params.portion;
+  var end = start + 5;
   messenger({appState: apiSession}, function callback(err, api) {
     if (api) {
       api.getThreadList(start, end, function (err, data) {

@@ -2,21 +2,26 @@ body {
     font-family: "Helvetica Neue", "Segoe UI", Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     line-height: 1;
-    line-height: 1;
     margin: 0;
     padding: 1rem;
     max-height: 100%;
     position: fixed;
+    overflow: hidden;
 }
 
 .thread-time {
     font-size: 10px;
 }
 
-.thread-container {
-    overflow: scroll;
+.full-width {
+    width: 100%;
+}
+
+.scroll-area-container {
+    overflow: scroll !important;
     display: inline-flex;
     height: 100%;
+    width: 100%                                                                                                                                                                                                                                                                                                                                                                                                     ;
     position: fixed;
 }
 
@@ -42,14 +47,6 @@ body {
 
 /* Message */
 
-
-
-.messages {
-    list-style: none;
-    overflow: scroll;
-    scroll-behavior: smooth;
-}
-
 .message-sender {
     color: dimgray;
 }
@@ -71,10 +68,14 @@ body {
 }
 
 .uiScrollableArea {
+    list-style: none;
+    overflow-x: hidden;
+    overflow-y: scroll;
+    scroll-behavior: smooth;
     direction: ltr;
     height: 100%;
-    overflow: hidden;
-    position: relative
+    position: relative;
+
 }
 
 
@@ -84,4 +85,8 @@ body {
 
 .friend {
     color: green;
+}
+
+::-webkit-scrollbar {
+    display: none;
 }

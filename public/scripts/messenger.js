@@ -61,13 +61,16 @@ var Thread = React.createClass({
                 body: $('#' + this.state.currentThread).val(),
                 thread: this.state.currentThread
             }
-            socket.emit('chat message outgoing', JSON.stringify(message));
+            if (message.body && message.thread) {
+                socket.emit('chat message outgoing', JSON.stringify(message));
+            }
             $('#' + this.state.currentThread).val("");
         }
         this.setState({
             lastMessage: message
         })
         message = null;
+        this.loadThread(this.state.currentThread, 1);
     },
 
     componentWillReceiveProps: function (nextProp) {
@@ -76,10 +79,6 @@ var Thread = React.createClass({
         this.setState({
             currentThread: nextProp.currentThread
         })
-
-        //socket.on('chat message', function (msg) {
-        //  $('#messages').append($('<li>').text(msg));
-        //});
     },
 
     //shouldComponentUpdate: function () {
@@ -150,8 +149,8 @@ var Thread = React.createClass({
             )
         })
         return this.state.currentThread ? (
-            <div>
-                <ul className="messages inline-list uiScrollableArea">
+            <div className="full-width">
+                <ul className="inline-list uiScrollableArea">
                     {messages}
                 </ul>
                 <form onSubmit={this.handleSubmit} className="row" action="">
@@ -268,7 +267,6 @@ var ThreadParticipants = React.createClass({
 
 var ThreadsList = React.createClass({
     getInitialState: function () {
-        this.incomingMessagesListenerHandler('on');
         return {
             data: [],
             currentThread: null,
@@ -279,6 +277,11 @@ var ThreadsList = React.createClass({
 
     componentWillMount: function () {
         this.getCurrentUserID();
+        this.incomingMessagesListenerHandler();
+
+        socket.on('chat message incoming', (msg) =>
+            this.refs['thread'].loadThread(this.state.currentThread, 1)
+        );
     },
 
     getCurrentUserID: function () {
@@ -296,11 +299,11 @@ var ThreadsList = React.createClass({
         });
     },
 
-    incomingMessagesListenerHandler: function (state) {
+    incomingMessagesListenerHandler: function () {
         $.ajax({
-            url: '/api/listen/' + state,
+            url: '/api/listen',
             success: function (data) {
-                return true; //TODO: get ServiceWorker and don't call if offline
+                console.log(data);
             }.bind(this),
             error: function (xhr, status, err) {
                 console.error('api/listen', status, err.toString());
@@ -308,25 +311,22 @@ var ThreadsList = React.createClass({
         });
     },
 
-    loadThreadsList: function () {
+    loadThreadsList: function (portion) {
         $.ajax({
-            url: '/api/threads',
+            url: '/api/threads/' + portion,
             dataType: 'json',
             cache: true,
             success: function (data) {
                 this.setState({data: data})
             }.bind(this),
             error: function (xhr, status, err) {
-                console.error('api/threads', status, err.toString());
+                console.error('api/threads' + portion, status, err.toString());
             }.bind(this)
         });
     },
 
     componentDidMount: function () {
-        this.loadThreadsList();
-        socket.on('chat message incoming', function (msg) {
-            console.log((JSON.parse(msg)['body'] + "  " + JSON.parse(msg)['thread']));
-        });
+        this.loadThreadsList(0); //jQery scroll
     },
 
     updateCurrentThread: function (thread) {
@@ -355,14 +355,18 @@ var ThreadsList = React.createClass({
             );
         })
         return (
-            <div>
-                <div className=" columns ">
-                    <div className="threadsList">
+            <div className="scroll-area-container columns">
+                <div className=" inline-list uiScrollableArea">
+                    <div className="">
                         {threads}
                     </div>
                 </div>
-                <div className="thread-container columns end">
-                    <Thread currentThread={this.state.currentThread} currentUserID={this.state.currentUserID}/>
+                <div className="scroll-area-container columns end">
+                    <Thread
+                        currentThread={this.state.currentThread}
+                        currentUserID={this.state.currentUserID}
+                        ref="thread"
+                    />
                 </div>
             </div>
         );
