@@ -4,8 +4,14 @@
   global.addEventListener('install', event => event.waitUntil(global.skipWaiting()));
   global.addEventListener('activate', event => event.waitUntil(global.clients.claim()));
 
-  toolbox.router.get('/api/*', toolbox.networkFirst);
-  toolbox.router.get('/*', toolbox.cacheFirst);
+  toolbox.options.debug = true;
+
+  //toolbox.precache(['/index.html', '/css/base.css', '/scripts/messenger.js']);
+
+
+  toolbox.router.get('/api/threads/*', toolbox.cacheFirst);
+  //toolbox.router.get('/*', toolbox.cacheFirst);
+
 
 
 })(self);

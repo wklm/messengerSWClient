@@ -52,7 +52,6 @@ body {
 }
 
 .message-body {
-    background: tomato;
     color: white;
     word-wrap: break-word;
     border-radius: 1rem;
@@ -89,4 +88,26 @@ body {
 
 ::-webkit-scrollbar {
     display: none;
+}
+
+.foreign {
+    display: flex;
+    flex-flow: row wrap;
+    /* This aligns items to the end line on main-axis */
+    justify-content: flex-end;
+}
+
+.own {
+    display: flex;
+    flex-flow: row wrap;
+    /* This aligns items to the end line on main-axis */
+    justify-content: flex-start;
+}
+
+.foreign-message-background {
+    background: teal;
+}
+
+.own-message-background {
+    background: tomato;
 }

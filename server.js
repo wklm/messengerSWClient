@@ -60,7 +60,7 @@ app.get('/api/appStatus', function (req, res) {
   });
 });
 
-app.get('/api/threads/:threadID/:portion', function (req, res) {
+app.get('/api/threads/:threadID/portion/:portion', function (req, res) {
   var start = 0;
   var end = 10;
 
@@ -69,6 +69,15 @@ app.get('/api/threads/:threadID/:portion', function (req, res) {
     api.getThreadHistory(req.params.threadID, start, end, null, function (err, data) {
       res.send(data);
     });
+  });
+});
+
+app.get('/api/threads/:threadID/message/:messageIndex', function(req, res) {
+  if (err) return console.error(err);
+
+  api.getThreadHistory(req.params.threadID, req.params.messageIndex, req.params.messageIndex, null, function (err, data) {
+    console.log(data);
+    //res.send(data);
   });
 });
 
@@ -82,22 +91,20 @@ app.get('/api/friends', function (req, res) {
   });
 });
 
-app.get('/api/listen', function (req, res) { //TODO: Prevent multiple socket instances
+app.get('/api/listen', function () { //TODO: Prevent multiple socket instances
   messenger({appState: apiSession}, function callback(err, api) {
     if (err) return console.error(err);
     var stopListening = api.listen(function (err, event) {
         if (event.body && event.threadID) {
           var message = {
-            body: event.body,
+            body: event.type === "message" ? event.body : "unsupported media content",
             thread: event.threadID
           }
           io.emit('chat message incoming', JSON.stringify(message));
-          console.log(message['body'] + " " + message['thread']);
         }
     });
   })
 });
-
 
 app.get('/api/logout', function (req, res) {
   messenger({appState: apiSession}, function callback(err, api) {

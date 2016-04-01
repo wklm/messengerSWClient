@@ -47,10 +47,10 @@ var Messenger = React.createClass({
 var Thread = React.createClass({
     getInitialState: function () {
         return {
-            init: true,
-            threadsCache: [],
+            messagesCache: [],
             currentThread: null,
             lastMessage: null,
+            lastSent: null
         }
     },
 
@@ -58,19 +58,30 @@ var Thread = React.createClass({
         e.preventDefault();
         if (this.state.currentThread) {
             var message = {
+                id: this.state.messagesCache.length,
                 body: $('#' + this.state.currentThread).val(),
-                thread: this.state.currentThread
+                thread: this.state.currentThread,
+                own: true
             }
             if (message.body && message.thread) {
                 socket.emit('chat message outgoing', JSON.stringify(message));
+                this.appendNewMessageOnFronted(message);
             }
             $('#' + this.state.currentThread).val("");
         }
+    },
+
+    appendNewMessageOnFronted: function (message) {
+        var messages = this.state.messagesCache;
+        messages.push(message);
         this.setState({
-            lastMessage: message
+            messagesCache: messages
         })
-        message = null;
-        this.loadThread(this.state.currentThread, 1);
+        if (message.own) {
+            this.setState({
+                lastSent: message
+            })
+        }
     },
 
     componentWillReceiveProps: function (nextProp) {
@@ -81,17 +92,37 @@ var Thread = React.createClass({
         })
     },
 
-    //shouldComponentUpdate: function () {
-    //  this.loadThread(this.state.currentThread, 1);
-    //  return true;
-    //},
+    getLastMessage: function () {
+        $.ajax({
+            url: '/api/threads/' + thread + '/message/' + 0,
+            dataType: 'json',
+            cache: true,
+            success: function (data) {
+                let message = {
+                    id: k,
+                    senderName: data['senderName'],
+                    body: data['body'],
+                    date: data['timestampDatetime'],
+                    timestamp: data['timestamp'],
+                    own: data['senderID'] === 'fbid:' + this.props.currentUserID
+                }
+
+                this.setState({
+                    lastMessage: message
+                })
+            }.bind(this),
+            error: function (xhr, status, err) {
+                console.error('/api/threads/' + thread + '/message/' + 0, status, err.toString());
+            }.bind(this)
+        });
+    },
 
 
     loadThread: function (thread, portion) {
         var threads = [];
         if (thread && portion) {
             $.ajax({
-                url: '/api/threads/' + thread + '/' + portion,
+                url: '/api/threads/' + thread + '/portion/' + portion,
                 dataType: 'json',
                 cache: true,
                 success: function (data) {
@@ -99,6 +130,7 @@ var Thread = React.createClass({
                         let thread = {
                             id: k,
                             senderName: data[k]['senderName'],
+                            senderID: data[k]['senderID'],
                             body: data[k]['body'],
                             date: data[k]['timestampDatetime'],
                             timestamp: data[k]['timestamp'],
@@ -106,28 +138,26 @@ var Thread = React.createClass({
                         }
                         threads.push(thread);
                         this.setState({
-                            threadsCache: threads
+                            messagesCache: threads
                         })
+                        if (data.length - 1 == k) {
+                            this.setState({
+                                lastMessage: thread
+                            })
+                        }
                     }
                 }.bind(this),
                 error: function (xhr, status, err) {
-                    this.state.init ?
-                        this.setState({
-                            init: false
-                        }) :
-                        console.error('/api/threads/' + thread + '/' + portion, status, err.toString());
+                    console.error('/api/threads/' + thread + '/portion/' + portion, status, err.toString());
                 }.bind(this)
             });
         }
     },
     render: function () {
-        var messages = this.state.threadsCache.map(message => {
+        var messages = this.state.messagesCache.map(message => {
             return (message.own) ? (
-                <li className="row" key={message.id}>
-                    <p className="message-sender me small-1 large-2 columns">
-                        {message.senderName}
-                    </p>
-                    <p className="message-body small-5 medium-7 large-9 columns">
+                <li className="row own" key={message.id}>
+                    <p className="own message-body own-message-background small-5 medium-7 large-9 columns">
                         {message.body}
                     </p>
                     <p className="message-time small-2 large-1 columns">
@@ -135,11 +165,8 @@ var Thread = React.createClass({
                     </p>
                 </li>
             ) : (
-                <li className="row" key={message.id}>
-                    <p className="message-sender friend small-1 large-2 columns">
-                        {message.senderName}
-                    </p>
-                    <p className="message-body small-5 medium-7 large-9 columns">
+                <li className="row foreign" key={message.id}>
+                    <p className="foreign message-body foreign-message-background small-5 medium-7 large-9 columns">
                         {message.body}
                     </p>
                     <p className="message-time small-2 large-1 columns">
@@ -153,8 +180,8 @@ var Thread = React.createClass({
                 <ul className="inline-list uiScrollableArea">
                     {messages}
                 </ul>
-                <form onSubmit={this.handleSubmit} className="row" action="">
-                    <input className="small-12 columns" id={this.state.currentThread} autoComplete="off"
+                <form onSubmit={this.handleSubmit} className="row own" action="">
+                    <input className="small-11 columns" id={this.state.currentThread} autoComplete="off"
                            placeholder="input new message"/>
                 </form>
             </div>
@@ -235,7 +262,7 @@ var ThreadParticipants = React.createClass({
                     }
                 }.bind(this),
                 error: function (xhr, status, err) {
-                    console.error('api/threads', status, err.toString());
+                    console.error('api/threads/', status, err.toString());
                 }.bind(this)
             });
         }
@@ -266,7 +293,10 @@ var ThreadParticipants = React.createClass({
 });
 
 var ThreadsList = React.createClass({
+
     getInitialState: function () {
+        this.incomingMessagesListener();
+
         return {
             data: [],
             currentThread: null,
@@ -277,10 +307,10 @@ var ThreadsList = React.createClass({
 
     componentWillMount: function () {
         this.getCurrentUserID();
-        this.incomingMessagesListenerHandler();
 
         socket.on('chat message incoming', (msg) =>
-            this.refs['thread'].loadThread(this.state.currentThread, 1)
+            //this.refs['thread'].loadThread(this.state.currentThread, 1)
+            console.log(msg)
         );
     },
 
@@ -299,11 +329,11 @@ var ThreadsList = React.createClass({
         });
     },
 
-    incomingMessagesListenerHandler: function () {
+    incomingMessagesListener: function () {
         $.ajax({
             url: '/api/listen',
-            success: function (data) {
-                console.log(data);
+            success: function () {
+                console.log("incomingMessagesListener started");
             }.bind(this),
             error: function (xhr, status, err) {
                 console.error('api/listen', status, err.toString());
@@ -320,7 +350,7 @@ var ThreadsList = React.createClass({
                 this.setState({data: data})
             }.bind(this),
             error: function (xhr, status, err) {
-                console.error('api/threads' + portion, status, err.toString());
+                console.error('api/threads/' + portion, status, err.toString());
             }.bind(this)
         });
     },
@@ -336,7 +366,7 @@ var ThreadsList = React.createClass({
     },
 
     componentWillUnmount: function () {
-        this.incomingMessagesListenerHandler('off');
+        this.incomingMessagesListener('off');
     },
 
     render: function () {
@@ -464,12 +494,13 @@ ReactDOM.render(
     <Messenger />,
     document.getElementById('messenger')
 );
-//
-//if ('serviceWorker' in navigator) {
-//  navigator.serviceWorker.register('/sw', {
-//    scope: '/'
-//  });
-//}
+
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw', {
+        scope: '/'
+    });
+}
 
 
 function getTimePassed(threadTimestamp) {
