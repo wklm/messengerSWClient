@@ -50,29 +50,47 @@ var Thread = React.createClass({
             messagesCache: [],
             currentThread: null,
             lastMessage: null,
-            lastSent: null
+            lastSent: null,
+            messageQueue: []
         }
     },
+
+    //componentWillUpdate: function() {
+    //  console.log("poszedl update");
+    //},
 
     handleSubmit: function (e) {
         e.preventDefault();
         if (this.state.currentThread) {
+            var timestamp = Date.now();
             var message = {
                 id: this.state.messagesCache.length,
                 body: $('#' + this.state.currentThread).val(),
                 thread: this.state.currentThread,
-                own: true
+                own: true,
+                date: timestamp
             }
             if (message.body && message.thread) {
-                socket.emit('chat message outgoing', JSON.stringify(message));
-                this.appendNewMessageOnFronted(message);
+                this.appendNewMessageToQueue(message);
             }
             $('#' + this.state.currentThread).val("");
         }
     },
 
-    appendNewMessageOnFronted: function (message) {
+    appendNewMessageToQueue: function (message) {
+        var tempQueue = this.state.messageQueue;
+        tempQueue.push(message);
+        this.setState({
+            messageQueue: tempQueue
+        })
+
+        socket.emit('chat message outgoing', JSON.stringify(message));
+        this.appendNewMessageOnFronted(message);
+    },
+
+    appendNewMessageOnFronted: function (message) { //update
         var messages = this.state.messagesCache;
+        //if (message.body !== lastSent.body) {
         messages.push(message);
         this.setState({
             messagesCache: messages
@@ -82,9 +100,10 @@ var Thread = React.createClass({
                 lastSent: message
             })
         }
+        //}
     },
 
-    componentWillReceiveProps: function (nextProp) {
+    componentWillReceiveProps: function (nextProp) { //update
         this.loadThread(nextProp.currentThread, 1);
 
         this.setState({
@@ -308,9 +327,8 @@ var ThreadsList = React.createClass({
     componentWillMount: function () {
         this.getCurrentUserID();
 
-        socket.on('chat message incoming', (msg) =>
-            //this.refs['thread'].loadThread(this.state.currentThread, 1)
-            console.log(msg)
+        socket.on('chat message incoming', () =>
+            this.refs['thread'].loadThread(this.state.currentThread, 1)
         );
     },
 
@@ -499,6 +517,13 @@ ReactDOM.render(
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw', {
         scope: '/'
+    }).then(function(reg) {
+        console.log(':^)', reg);
+        reg.pushManager.subscribe({
+            userVisibleOnly: true
+        }).then(function(sub) {
+            console.log('endpoint:', sub.endpoint);
+        });
     });
 }
 

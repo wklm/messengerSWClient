@@ -91,6 +91,8 @@ app.get('/api/friends', function (req, res) {
   });
 });
 
+var i = 0;
+
 app.get('/api/listen', function () { //TODO: Prevent multiple socket instances
   messenger({appState: apiSession}, function callback(err, api) {
     if (err) return console.error(err);
