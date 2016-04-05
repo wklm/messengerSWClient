@@ -67,6 +67,7 @@ var Thread = React.createClass({
                 id: this.state.messagesCache.length,
                 body: $('#' + this.state.currentThread).val(),
                 thread: this.state.currentThread,
+                senderName: this.state.currentUserID, // TODO: name
                 own: true,
                 date: timestamp
             }
@@ -85,10 +86,10 @@ var Thread = React.createClass({
         })
 
         socket.emit('chat message outgoing', JSON.stringify(message));
-        this.appendNewMessageOnFronted(message);
+        this.appendOutgoingMessageOnFronted(message);
     },
 
-    appendNewMessageOnFronted: function (message) { //update
+    appendOutgoingMessageOnFronted: function (message) { //update
         var messages = this.state.messagesCache;
         //if (message.body !== lastSent.body) {
         messages.push(message);
@@ -96,15 +97,40 @@ var Thread = React.createClass({
             messagesCache: messages
         })
         if (message.own) {
-            this.setState({
+            this.setState({ // TODO: Refactor
                 lastSent: message
             })
         }
         //}
     },
 
+    appendIncomingMessageOnFronted: function (msg) {
+        var messages = this.state.messagesCache;
+        var timestamp = Date.now();
+        var message = {
+            id: msg.messagedID,
+            body: msg.body,
+            thread: msg.thread,
+            senderName: "", // TODO: getSenderName(SenderID);
+            own: false,
+            date: timestamp
+        }
+        messages.push(message);
+        this.setState({
+            messagesCache: messages
+        })
+    },
+
     componentWillReceiveProps: function (nextProp) { //update
+        //var i = 0;
+        //do {
+        //    try {
         this.loadThread(nextProp.currentThread, 1);
+        //    } catch (excetpion) {
+        //        break;
+        //    }
+        //    console.log(i);
+        //} while (nextProp.currentThread === this.state.currentThread && i < 10)
 
         this.setState({
             currentThread: nextProp.currentThread
@@ -176,6 +202,9 @@ var Thread = React.createClass({
         var messages = this.state.messagesCache.map(message => {
             return (message.own) ? (
                 <li className="row own" key={message.id}>
+                    <p className="message-sender me">
+                        {message.senderName ? message.senderName.charAt(0) : "X"}
+                    </p>
                     <p className="own message-body own-message-background small-5 medium-7 large-9 columns">
                         {message.body}
                     </p>
@@ -185,6 +214,9 @@ var Thread = React.createClass({
                 </li>
             ) : (
                 <li className="row foreign" key={message.id}>
+                    <p className="message-sender friend">
+                        {message.senderName.charAt(0)}
+                    </p>
                     <p className="foreign message-body foreign-message-background small-5 medium-7 large-9 columns">
                         {message.body}
                     </p>
@@ -320,16 +352,47 @@ var ThreadsList = React.createClass({
             data: [],
             currentThread: null,
             newMessageArrived: false,
-            currentUserID: null
+            currentUserID: null,
+            lastMessageID: null
         };
     },
 
     componentWillMount: function () {
         this.getCurrentUserID();
 
-        socket.on('chat message incoming', () =>
-            this.refs['thread'].loadThread(this.state.currentThread, 1)
-        );
+        var that = this; // TODO: REFACTOR!!!
+
+        socket.on('chat message incoming',  (msg) =>
+            this.incomingMessageHandler(JSON.parse(msg))
+
+            //this.refs['thread'].loadThread(this.state.currentThread, 1)
+
+            //socket.on('notification', (m) =>
+            //    console.log("")
+            //)
+        )
+    },
+
+    handleNotification: function () {
+        console.log("handleNotification");
+        if (!Notification) {
+            alert('Desktop notifications not available in your browser. Try Chromium.');
+            return;
+        }
+
+        if (Notification.permission !== "granted")
+            Notification.requestPermission();
+        else {
+            var notification = new Notification('Notification title', {
+                icon: 'http://cdn.sstatic.net/stackexchange/img/logos/so/so-icon.png',
+                body: "Hey there! You've been notified!",
+            });
+
+            notification.onclick = function () {
+                window.open("http://stackoverflow.com/a/13328397/1269037");
+            };
+
+        }
     },
 
     getCurrentUserID: function () {
@@ -357,6 +420,16 @@ var ThreadsList = React.createClass({
                 console.error('api/listen', status, err.toString());
             }.bind(this)
         });
+    },
+
+    incomingMessageHandler: function (message) {
+        this.loadThreadsList();
+        if (message.messagedID !== this.state.lastMessageID) { // API BUG :(
+            this.setState({
+                lastMessageID: message.messagedID
+            })
+            this.refs['thread'].appendIncomingMessageOnFronted(message)
+        }
     },
 
     loadThreadsList: function (portion) {
@@ -514,18 +587,18 @@ ReactDOM.render(
 );
 
 
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw', {
-        scope: '/'
-    }).then(function(reg) {
-        console.log(':^)', reg);
-        reg.pushManager.subscribe({
-            userVisibleOnly: true
-        }).then(function(sub) {
-            console.log('endpoint:', sub.endpoint);
-        });
-    });
-}
+//if ('serviceWorker' in navigator) {
+//    navigator.serviceWorker.register('/sw', {
+//        scope: '/'
+//    }).then(function (reg) {
+//        console.log(':^)', reg);
+//        reg.pushManager.subscribe({
+//            userVisibleOnly: true
+//        }).then(function (sub) {
+//            console.log('endpoint:', sub.endpoint);
+//        });
+//    });
+//}
 
 
 function getTimePassed(threadTimestamp) {

@@ -61,8 +61,8 @@ app.get('/api/appStatus', function (req, res) {
 });
 
 app.get('/api/threads/:threadID/portion/:portion', function (req, res) {
-  var start = 0;
-  var end = 10;
+  var start = req.params.portion;
+  var end = start + 10;
 
   messenger({appState: apiSession}, function callback(err, api) {
     if (err) return console.error(err);
@@ -91,18 +91,20 @@ app.get('/api/friends', function (req, res) {
   });
 });
 
-var i = 0;
-
 app.get('/api/listen', function () { //TODO: Prevent multiple socket instances
   messenger({appState: apiSession}, function callback(err, api) {
     if (err) return console.error(err);
     var stopListening = api.listen(function (err, event) {
         if (event.body && event.threadID) {
           var message = {
-            body: event.type === "message" ? event.body : "unsupported media content",
-            thread: event.threadID
+            body: event.body,
+            thread: event.threadID,
+            messagedID: event.messageID,
+            attachments: event.attachments,
+            isGroup: event.isGroup
           }
           io.emit('chat message incoming', JSON.stringify(message));
+          io.emit('notification', JSON.stringify(message));
         }
     });
   })

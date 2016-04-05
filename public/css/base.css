@@ -48,7 +48,11 @@ body {
 /* Message */
 
 .message-sender {
-    color: dimgray;
+    border-radius: 50%;
+    border: solid;
+    height: 2rem;
+    width: 2rem;
+    text-align: center;
 }
 
 .message-body {
@@ -64,6 +68,11 @@ body {
 
 .message-time {
     font-size: 10px;
+    color: darkgray;
+}
+
+.message-input {
+    margin-bottom: 1rem;
 }
 
 .uiScrollableArea {
@@ -79,11 +88,13 @@ body {
 
 
 .me {
-    color: red;
+    color: lightgray;
+    border-color: lightgray;
 }
 
 .friend {
-    color: green;
+    color: darkgray;
+    border-color: darkgray;
 }
 
 ::-webkit-scrollbar {
