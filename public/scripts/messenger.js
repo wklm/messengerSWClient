@@ -1,4 +1,5 @@
 var socket = io.connect('localhost:3000'); // TODO: ENVS!
+var participantsRepository = {}; // TODO: should be stored in an independent state container
 
 var Messenger = React.createClass({
     getInitialState: function () {
@@ -27,7 +28,6 @@ var Messenger = React.createClass({
         localStorage.setItem('auth', false);
     },
 
-
     render: function () {
         if (!this.state.authenticated) {
             return (
@@ -55,10 +55,6 @@ var Thread = React.createClass({
         }
     },
 
-    //componentWillUpdate: function() {
-    //  console.log("poszedl update");
-    //},
-
     handleSubmit: function (e) {
         e.preventDefault();
         if (this.state.currentThread) {
@@ -67,10 +63,10 @@ var Thread = React.createClass({
                 id: this.state.messagesCache.length,
                 body: $('#' + this.state.currentThread).val(),
                 thread: this.state.currentThread,
-                senderName: this.state.currentUserID, // TODO: name
+                senderName: 'you', //todo: name
                 own: true,
                 date: timestamp
-            }
+            };
             if (message.body && message.thread) {
                 this.appendNewMessageToQueue(message);
             }
@@ -79,13 +75,12 @@ var Thread = React.createClass({
     },
 
     appendNewMessageToQueue: function (message) {
+        socket.emit('chat message outgoing', JSON.stringify(message));
         var tempQueue = this.state.messageQueue;
         tempQueue.push(message);
         this.setState({
             messageQueue: tempQueue
-        })
-
-        socket.emit('chat message outgoing', JSON.stringify(message));
+        });
         this.appendOutgoingMessageOnFronted(message);
     },
 
@@ -95,7 +90,7 @@ var Thread = React.createClass({
         messages.push(message);
         this.setState({
             messagesCache: messages
-        })
+        });
         if (message.own) {
             this.setState({ // TODO: Refactor
                 lastSent: message
@@ -111,10 +106,10 @@ var Thread = React.createClass({
             id: msg.messagedID,
             body: msg.body,
             thread: msg.thread,
-            senderName: "", // TODO: getSenderName(SenderID);
+            senderName: participantsRepository[msg.senderID].firstName,
             own: false,
             date: timestamp
-        }
+        };
         messages.push(message);
         this.setState({
             messagesCache: messages
@@ -122,16 +117,7 @@ var Thread = React.createClass({
     },
 
     componentWillReceiveProps: function (nextProp) { //update
-        //var i = 0;
-        //do {
-        //    try {
         this.loadThread(nextProp.currentThread, 1);
-        //    } catch (excetpion) {
-        //        break;
-        //    }
-        //    console.log(i);
-        //} while (nextProp.currentThread === this.state.currentThread && i < 10)
-
         this.setState({
             currentThread: nextProp.currentThread
         })
@@ -150,7 +136,7 @@ var Thread = React.createClass({
                     date: data['timestampDatetime'],
                     timestamp: data['timestamp'],
                     own: data['senderID'] === 'fbid:' + this.props.currentUserID
-                }
+                };
 
                 this.setState({
                     lastMessage: message
@@ -161,7 +147,6 @@ var Thread = React.createClass({
             }.bind(this)
         });
     },
-
 
     loadThread: function (thread, portion) {
         var threads = [];
@@ -177,14 +162,14 @@ var Thread = React.createClass({
                             senderName: data[k]['senderName'],
                             senderID: data[k]['senderID'],
                             body: data[k]['body'],
-                            date: data[k]['timestampDatetime'],
+                            //date: data[k]['timestampDatetime'],
                             timestamp: data[k]['timestamp'],
                             own: data[k]['senderID'] === 'fbid:' + this.props.currentUserID
-                        }
+                        };
                         threads.push(thread);
                         this.setState({
                             messagesCache: threads
-                        })
+                        });
                         if (data.length - 1 == k) {
                             this.setState({
                                 lastMessage: thread
@@ -225,16 +210,19 @@ var Thread = React.createClass({
                     </p>
                 </li>
             )
-        })
+        });
         return this.state.currentThread ? (
             <div className="full-width">
                 <ul className="inline-list uiScrollableArea">
                     {messages}
+                    <li>
+                        <form onSubmit={this.handleSubmit} className="row" action="">
+                            <input className="message-input" id={this.state.currentThread} autoComplete="off"
+                                   placeholder="input new message"/>
+                        </form>
+                    </li>
                 </ul>
-                <form onSubmit={this.handleSubmit} className="row own" action="">
-                    <input className="small-11 columns" id={this.state.currentThread} autoComplete="off"
-                           placeholder="input new message"/>
-                </form>
+
             </div>
         ) : (
             <div>
@@ -287,8 +275,16 @@ var LoginForm = React.createClass({
 
 var ThreadParticipants = React.createClass({
     getInitialState: function () {
-        return {data: [], photos: []};
+        return {
+            data: [],
+            repository: []
+        };
     },
+
+    //componentWillUpdate: function() {
+    //
+    //},
+
     loadParticipants: function () {
         var participants = [];
         for (var id in this.props.ids) {
@@ -303,11 +299,12 @@ var ThreadParticipants = React.createClass({
                             fullName: data[k]['name'],
                             firstName: data[k]['firstName'],
                             photo: data[k]['thumbSrc']
-                        }
+                        };
                         if (participant.id !== this.props.currentUserID) {
                             participants.push(participant);
+                            participantsRepository[k] = participant;
                             this.setState({
-                                data: participants
+                                data: participants,
                             });
                         }
                     }
@@ -321,6 +318,11 @@ var ThreadParticipants = React.createClass({
     componentDidMount: function () {
         this.loadParticipants();
     },
+
+    getParticipantByID: function (id) {
+        return this.state.repository[id];
+    },
+
     render: function () {
         var participants = this.state.data.map(participant => {
             return (
@@ -344,10 +346,8 @@ var ThreadParticipants = React.createClass({
 });
 
 var ThreadsList = React.createClass({
-
     getInitialState: function () {
         this.incomingMessagesListener();
-
         return {
             data: [],
             currentThread: null,
@@ -359,40 +359,9 @@ var ThreadsList = React.createClass({
 
     componentWillMount: function () {
         this.getCurrentUserID();
-
-        var that = this; // TODO: REFACTOR!!!
-
-        socket.on('chat message incoming',  (msg) =>
+        socket.on('chat message incoming', (msg) =>
             this.incomingMessageHandler(JSON.parse(msg))
-
-            //this.refs['thread'].loadThread(this.state.currentThread, 1)
-
-            //socket.on('notification', (m) =>
-            //    console.log("")
-            //)
         )
-    },
-
-    handleNotification: function () {
-        console.log("handleNotification");
-        if (!Notification) {
-            alert('Desktop notifications not available in your browser. Try Chromium.');
-            return;
-        }
-
-        if (Notification.permission !== "granted")
-            Notification.requestPermission();
-        else {
-            var notification = new Notification('Notification title', {
-                icon: 'http://cdn.sstatic.net/stackexchange/img/logos/so/so-icon.png',
-                body: "Hey there! You've been notified!",
-            });
-
-            notification.onclick = function () {
-                window.open("http://stackoverflow.com/a/13328397/1269037");
-            };
-
-        }
     },
 
     getCurrentUserID: function () {
@@ -423,12 +392,31 @@ var ThreadsList = React.createClass({
     },
 
     incomingMessageHandler: function (message) {
-        this.loadThreadsList();
-        if (message.messagedID !== this.state.lastMessageID) { // API BUG :(
+        if (message.messagedID !== this.state.lastMessageID) { // API TYPO :(
+            this.loadThreadsList();
             this.setState({
                 lastMessageID: message.messagedID
-            })
-            this.refs['thread'].appendIncomingMessageOnFronted(message)
+            });
+            this.refs['thread'].appendIncomingMessageOnFronted(message);
+            this.handleNotification(message);
+        }
+    },
+
+    handleNotification: function (message) {
+        if (!Notification) {
+            alert('Desktop notifications not available in your browser. Try Chromium.');
+            return;
+        }
+        if (Notification.permission !== "granted")
+            Notification.requestPermission();
+        else {
+            var notification = new Notification(participantsRepository[message.senderID].firstName, {
+                icon: participantsRepository[message.senderID].photo,
+                body: message.body,
+            });
+            notification.onclick = function () {
+                window.open("http://stackoverflow.com/a/13328397/1269037");
+            };
         }
     },
 
@@ -471,10 +459,11 @@ var ThreadsList = React.createClass({
                                         className="small-2 small-centered columns"
                                         ids={thread.participantIDs}
                                         currentUserID={this.state.currentUserID}
+                                        ref="threadParticipants"
                     />
                 </div>
             );
-        })
+        });
         return (
             <div className="scroll-area-container columns">
                 <div className=" inline-list uiScrollableArea">
@@ -522,27 +511,6 @@ var AppStatus = React.createClass({
     }
 });
 
-var SessionData = React.createClass({
-    render: function () {
-        var sesionData = this.props.data.map(function (Cookie) {
-            return (
-                <p key={Cookie.key}> {
-                    Cookie.value + "\n" +
-                    Cookie.Path + "\n" +
-                    Cookie.hostOnly + "\n" +
-                    Cookie.aAge + "\n" +
-                    Cookie.cAge + "\n"
-                }</p>
-            );
-        });
-        return (
-            <div className="sessionData">
-                {sesionData}
-            </div>
-        );
-    }
-});
-
 var FriendsList = React.createClass({
     getInitialState: function () {
         return {data: []};
@@ -586,25 +554,14 @@ ReactDOM.render(
     document.getElementById('messenger')
 );
 
-
-//if ('serviceWorker' in navigator) {
-//    navigator.serviceWorker.register('/sw', {
-//        scope: '/'
-//    }).then(function (reg) {
-//        console.log(':^)', reg);
-//        reg.pushManager.subscribe({
-//            userVisibleOnly: true
-//        }).then(function (sub) {
-//            console.log('endpoint:', sub.endpoint);
-//        });
-//    });
-//}
-
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw', {
+        scope: '/'
+    })
+}
 
 function getTimePassed(threadTimestamp) {
-
     var elapsed = Date.now() - threadTimestamp;
-
     var msPerMinute = 60 * 1000;
     var msPerHour = msPerMinute * 60;
     var msPerDay = msPerHour * 24;
@@ -613,25 +570,15 @@ function getTimePassed(threadTimestamp) {
 
     if (elapsed < msPerMinute) {
         return Math.round(elapsed / 1000) + ' s';
-    }
-
-    else if (elapsed < msPerHour) {
+    } else if (elapsed < msPerHour) {
         return Math.round(elapsed / msPerMinute) + ' m';
-    }
-
-    else if (elapsed < msPerDay) {
+    } else if (elapsed < msPerDay) {
         return Math.round(elapsed / msPerHour) + ' h';
-    }
-
-    else if (elapsed < msPerMonth) {
+    } else if (elapsed < msPerMonth) {
         return Math.round(elapsed / msPerDay) + ' d';
-    }
-
-    else if (elapsed < msPerYear) {
+    } else if (elapsed < msPerYear) {
         return Math.round(elapsed / msPerMonth) + ' mo';
-    }
-
-    else {
+    } else {
         return Math.round(elapsed / msPerYear) + ' Y';
     }
 }

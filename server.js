@@ -101,10 +101,10 @@ app.get('/api/listen', function () { //TODO: Prevent multiple socket instances
             thread: event.threadID,
             messagedID: event.messageID,
             attachments: event.attachments,
-            isGroup: event.isGroup
-          }
+            isGroup: event.isGroup,
+            senderID: event.senderID
+          };
           io.emit('chat message incoming', JSON.stringify(message));
-          io.emit('notification', JSON.stringify(message));
         }
     });
   })
@@ -128,7 +128,7 @@ app.get('/api/threads/:portion', function (req, res) {
       api.getThreadList(start, end, function (err, data) {
         if (err) return console.error(err);
         if (data) {
-          res.send(data)
+          res.send(data);
           return true;
         }
       });

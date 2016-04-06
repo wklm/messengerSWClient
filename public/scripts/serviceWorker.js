@@ -8,7 +8,6 @@
 
     toolbox.precache(['/index.html', '/css/base.css', '/scripts/messenger.js']);
 
-
     toolbox.router.get('/api/threads/*', toolbox.networkFirst);
     toolbox.router.get('/api/listen', toolbox.networkOnly);
     toolbox.router.get('/api', toolbox.cacheFirst);
@@ -20,19 +19,12 @@
     toolbox.router.get('/css', toolbox.cacheFirst);
     toolbox.router.get('/react', toolbox.cacheFirst);
     toolbox.router.get('/sw-toolbox', toolbox.cacheFirst);
-    //toolbox.router.get('/', toolbox.cacheFirst);
-
 
     self.addEventListener('fetch', function (event) { // may be global
         //console.log(event);
     })
 
 })(self);
-
-
-
-// GCM endpoint id:
-//  https://android.googleapis.com/gcm/send/enBzYvnGxHs:APA91bGjqZWbXeM1ah3P1ZGl-ABYrJu7bpZI1pglrc8pn-k1nVIP39gg-q__0YHpoNvJRn0LS_j6Oj-vJ73sLC6S-LBQ9qeZ0accYsU9ZlIlfgmBbwt5vL8Q2zkFuipmbYHVW16VUyNa
 
 
 
