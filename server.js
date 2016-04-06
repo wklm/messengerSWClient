@@ -102,7 +102,8 @@ app.get('/api/listen', function () { //TODO: Prevent multiple socket instances
             messagedID: event.messageID,
             attachments: event.attachments,
             isGroup: event.isGroup,
-            senderID: event.senderID
+            senderID: event.senderID,
+            date: Date.now()
           };
           io.emit('chat message incoming', JSON.stringify(message));
         }

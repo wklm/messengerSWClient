@@ -86,9 +86,8 @@ var Thread = React.createClass({
 
     appendOutgoingMessageOnFronted: function (message) { //update
         var messages = this.state.messagesCache;
-        //if (message.body !== lastSent.body) {
+        message.timestamp = Date.now();
         messages.push(message);
-
         this.setState({
             messagesCache: messages
         });
@@ -97,7 +96,6 @@ var Thread = React.createClass({
                 lastSent: message
             })
         }
-        //}
     },
 
     appendIncomingMessageOnFronted: function (msg) {
@@ -186,6 +184,7 @@ var Thread = React.createClass({
             });
         }
     },
+
     render: function () {
         var messages = this.state.messagesCache.map(message => {
             return (message.own) ? (
@@ -239,12 +238,15 @@ var LoginForm = React.createClass({
     getInitialState: function () {
         return {email: '', password: ''};
     },
+
     handleEmailChange: function (e) {
         this.setState({email: e.target.value});
     },
+
     handlePasswordChange: function (e) {
         this.setState({password: e.target.value});
     },
+
     handleSubmit: function (e) {
         e.preventDefault();
         var email = this.state.email.trim();
@@ -253,6 +255,7 @@ var LoginForm = React.createClass({
         this.props.onLogin({email: email, password: password});
         this.setState({email: '', password: ''});
     },
+
     render: function () {
         return (
             <div className="row">
@@ -284,10 +287,6 @@ var ThreadParticipants = React.createClass({
         };
     },
 
-    //componentWillUpdate: function() {
-    //
-    //},
-
     loadParticipants: function () {
         var participants = [];
         for (var id in this.props.ids) {
@@ -318,6 +317,7 @@ var ThreadParticipants = React.createClass({
             });
         }
     },
+
     componentDidMount: function () {
         this.loadParticipants();
     },
@@ -559,11 +559,11 @@ ReactDOM.render(
     document.getElementById('messenger')
 );
 
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw', {
-            scope: '/'
-        })
-    }
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw', {
+        scope: '/'
+    })
+}
 
 function getTimePassed(threadTimestamp) {
     var elapsed = Date.now() - threadTimestamp;
