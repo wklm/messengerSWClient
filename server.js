@@ -18,7 +18,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 var sess;
 
-function login(email, password, req) {
+function login(email, password) {
     messenger({email: email, password: password}, function callback(err, api) {
         sess.apiSession = api.getAppState();
         return err;
@@ -28,7 +28,7 @@ function login(email, password, req) {
 io.on('connection', function (socket) {
     socket.on('chat message outgoing', function (msg) {
         message = JSON.parse(msg);
-        messenger({appState: apiSession}, function callback(err, api) {
+        messenger({appState: sess.apiSession}, function callback(err, api) {
             if (err) return console.error(err);
             if (message['body'] && message['thread']) {
                 api.sendMessage(message['body'], message['thread']);
@@ -42,7 +42,7 @@ app.get('/api', function (req, res) {
     sess=req.session;
     sess.email = req.param('email').toString().trim();
     sess.password = req.param('password').toString().trim();
-    login(sess.email, sess.password, req) ? res.send(false) : res.send(true);
+    login(sess.email, sess.password) ? res.send(false) : res.send(true);
 
 });
 
