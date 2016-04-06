@@ -88,6 +88,7 @@ var Thread = React.createClass({
         var messages = this.state.messagesCache;
         //if (message.body !== lastSent.body) {
         messages.push(message);
+
         this.setState({
             messagesCache: messages
         });
@@ -110,10 +111,12 @@ var Thread = React.createClass({
             own: false,
             date: timestamp
         };
-        messages.push(message);
-        this.setState({
-            messagesCache: messages
-        })
+        if (message.thread === this.state.currentThread) {
+            messages.push(message);
+            this.setState({
+                messagesCache: messages
+            })
+        }
     },
 
     componentWillReceiveProps: function (nextProp) { //update
@@ -415,8 +418,10 @@ var ThreadsList = React.createClass({
                 body: message.body,
             });
             notification.onclick = function () {
-                window.open("http://stackoverflow.com/a/13328397/1269037");
-            };
+                this.setState({
+                    currentThread: message.thread
+                })
+            }.bind(this);
         }
     },
 
@@ -554,11 +559,11 @@ ReactDOM.render(
     document.getElementById('messenger')
 );
 
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw', {
-        scope: '/'
-    })
-}
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw', {
+            scope: '/'
+        })
+    }
 
 function getTimePassed(threadTimestamp) {
     var elapsed = Date.now() - threadTimestamp;
