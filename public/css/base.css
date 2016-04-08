@@ -12,6 +12,10 @@ body {
     position: fixed;
     overflow: hidden;
 }
+
+li {
+    list-style: none;
+}
 .thread-time {
     font-size: 10px;
 }
@@ -79,18 +83,13 @@ body {
 }
 
 .message-input {
-    position: relative;
-    width: 100%;
-    margin-bottom: .5rem;
+
     padding-bottom: 2rem;
-    padding-top: 0rem;
     padding-left: 1rem;
-    margin-top: 5rem;
-    bottom: 5rem;;
+
 }
 
 .uiScrollableArea {
-    list-style: none;
     overflow-x: hidden;
     overflow-y: scroll;
     scroll-behavior: smooth;
@@ -111,6 +110,7 @@ body {
     margin: 0;
     padding: 0;
     height: var(--menu-bar-height);
+    margin-bottom: 1rem;
 }
 
 .menu-bar-element {

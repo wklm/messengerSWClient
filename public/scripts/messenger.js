@@ -33,7 +33,6 @@ var Messenger = React.createClass({
     },
 
     goBack: function () {
-        console.log("go back!");
         this.setState({
             currentView: 'threadsListView'
         })
@@ -48,7 +47,7 @@ var Messenger = React.createClass({
         return this.state.authenticated ? (
             <div>
                 <ul className="menu-bar full-width">
-                    <li className={this.props.currentView === 'threadsListView' ? 'menu-bar-element hidden' : 'menu-bar-element'}>
+                    <li className="menu-bar-element hidden" id="go-back-button">
                         <button onClick={this.goBack}> back</button>
                     </li>
                     <li className="menu-bar-element">
@@ -57,7 +56,11 @@ var Messenger = React.createClass({
 
                 </ul>
                 <div className="row">
-                    <ThreadsList currentView={this.state.currentView}/>
+                    <ThreadsList
+                        currentView={this.state.currentView}
+                        ref="threadsList"
+
+                    />
                 </div>
             </div>
         ) : (
@@ -83,11 +86,9 @@ var ThreadsList = React.createClass({
     },
 
     componentWillReceiveProps: function (nextProp) {
-        console.log(nextProp.currentView);
         this.setState({
             currentView: nextProp.currentView
         })
-        console.log(this.state.currentView);
     },
 
     componentWillMount: function () {
@@ -178,10 +179,14 @@ var ThreadsList = React.createClass({
             currentThread: thread,
             currentView: 'threadView'
         })
+        jQuery('#go-back-button').removeClass('hidden');
+
     },
 
     componentWillUnmount: function () {
         this.incomingMessagesListener('off');
+        jQuery('#go-back-button').addClass('hidden');
+
     },
 
     render: function () {
@@ -197,7 +202,7 @@ var ThreadsList = React.createClass({
                                         ref="threadParticipants"
                     />
                     <p>{thread.snippet}</p>
-                    <img src={thread.imageScr}/>
+                    <p>{getTimePassed(thread.serverTimestamp)} ago</p>
                 </div>
             );
         });
@@ -335,6 +340,14 @@ var Thread = React.createClass({
         });
     },
 
+    componentWillUnmount: function() {
+      this.setState({
+          messagesCache: [],
+          currentThread: null,
+
+      });
+    },
+
     loadThread: function (thread, portion) {
         var threads = [];
         if (thread && portion) {
@@ -403,8 +416,9 @@ var Thread = React.createClass({
             <ul>
                 {messages}
                 <li className="row">
-                    <form onSubmit={this.handleSubmit} className="row" action="">
-                        <input className="message-input" id={this.state.currentThread} autoComplete="off"
+                    <form onSubmit={this.handleSubmit} action="">
+                        <input className="message-input small-12 columns" id={this.state.currentThread}
+                               autoComplete="off"
                                placeholder="input new message"/>
                     </form>
                 </li>
@@ -510,19 +524,19 @@ var ThreadParticipants = React.createClass({
     render: function () {
         var participants = this.state.data.map(participant => {
             return (
-                <div onClick={this.props.a.bind(null,this.props.b)} className="row thread-list-element"
+                <div onClick={this.props.a.bind(null,this.props.b)}
                      key={participant.id}>
-                    <p className="small-8 columns thread-list-name">
+                    <p >
                         {participant.firstName}
                     </p>
-                    <img className="small-4  columns thread-list-photo" src={participant.photo}
+                    <img src={participant.photo}
                          alt={participant.name + " photo"}/>
                 </div>
             );
         });
 
         return (
-            <div className="threadsList">
+            <div>
                 {participants}
             </div>
         );
