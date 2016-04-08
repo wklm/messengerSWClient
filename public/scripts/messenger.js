@@ -3,7 +3,16 @@ var participantsRepository = {}; // TODO: should be stored in an independent sta
 
 var Messenger = React.createClass({
     getInitialState: function () {
-        return {authenticated: localStorage.getItem('auth') === 'false'}; //TODO: REFACTOR!
+        return {
+            authenticated: localStorage.getItem('auth'), //TODO: REFACTOR!
+            currentView: ""
+        }
+    },
+
+    componentDidMount: function () {
+        this.setState({
+            currentView: "threadsListView"
+        })
     },
 
     handleLogin: function (credentials) {
@@ -14,7 +23,7 @@ var Messenger = React.createClass({
             data: credentials,
             success: function (data) {
                 this.setState({authenticated: data});
-                localStorage.setItem('auth', data);
+                localStorage.setItem('auth', !data);
             }.bind(this),
             error: function (xhr, status, err) {
                 this.setState({data: credentials});
@@ -23,26 +32,203 @@ var Messenger = React.createClass({
         });
     },
 
+    goBack: function () {
+        console.log("go back!");
+        this.setState({
+            currentView: 'threadsListView'
+        })
+    },
+
     logout: function () {
         this.setState({authenticated: false});
         localStorage.setItem('auth', false);
     },
 
     render: function () {
-        if (!this.state.authenticated) {
-            return (
-                <div className="Messenger">
-                    <h1>Messenger on Steroids</h1>
-                    <LoginForm onLogin={this.handleLogin}/>
+        return this.state.authenticated ? (
+            <div>
+                <ul className="menu-bar full-width">
+                    <li className={this.props.currentView === 'threadsListView' ? 'menu-bar-element hidden' : 'menu-bar-element'}>
+                        <button onClick={this.goBack}> back</button>
+                    </li>
+                    <li className="menu-bar-element">
+                        <button onClick={this.logout}> logout</button>
+                    </li>
+
+                </ul>
+                <div className="row">
+                    <ThreadsList currentView={this.state.currentView}/>
                 </div>
-            )
-        } else {
-            return (
-                <ThreadsList/>
-            )
-        }
+            </div>
+        ) : (
+            <div className="Messenger">
+                <h1>Messenger on Steroids</h1>
+                <LoginForm onLogin={this.handleLogin}/>
+            </div>
+        )
     }
 });
+
+var ThreadsList = React.createClass({
+    getInitialState: function () {
+        this.incomingMessagesListener();
+        return {
+            data: [],
+            currentThread: null,
+            newMessageArrived: false,
+            currentUserID: null,
+            lastMessageID: null,
+            currentView: 'threadsListView'
+        };
+    },
+
+    componentWillReceiveProps: function (nextProp) {
+        console.log(nextProp.currentView);
+        this.setState({
+            currentView: nextProp.currentView
+        })
+        console.log(this.state.currentView);
+    },
+
+    componentWillMount: function () {
+        this.getCurrentUserID();
+        socket.on('chat message incoming', (msg) =>
+            this.incomingMessageHandler(JSON.parse(msg))
+        )
+    },
+
+    getCurrentUserID: function () {
+        $.ajax({
+            url: '/api/currentUserID/',
+            cache: true,
+            success: function (data) {
+                this.setState({
+                    currentUserID: data
+                })
+            }.bind(this),
+            error: function (xhr, status, err) {
+                console.error('/api/currentUserID', status, err.toString());
+            }.bind(this)
+        });
+    },
+
+    incomingMessagesListener: function () {
+        $.ajax({
+            url: '/api/listen',
+            success: function () {
+                console.log("incomingMessagesListener started");
+            }.bind(this),
+            error: function (xhr, status, err) {
+                console.error('api/listen', status, err.toString());
+            }.bind(this)
+        });
+    },
+
+    incomingMessageHandler: function (message) {
+        if (message.messagedID !== this.state.lastMessageID) { // API TYPO :(
+            this.loadThreadsList();
+            this.setState({
+                lastMessageID: message.messagedID
+            });
+            this.refs['thread'].appendIncomingMessageOnFronted(message);
+            this.handleNotification(message);
+        }
+    },
+
+    handleNotification: function (message) {
+        if (!Notification) {
+            alert('Desktop notifications not available in your browser. Try Chromium.');
+            return;
+        }
+        if (Notification.permission !== "granted")
+            Notification.requestPermission();
+        else {
+            var notification = new Notification(participantsRepository[message.senderID].firstName, {
+                icon: participantsRepository[message.senderID].photo,
+                body: message.body,
+            });
+            notification.onclick = function () {
+                this.setState({
+                    currentThread: message.thread
+                })
+            }.bind(this);
+        }
+    },
+
+    loadThreadsList: function (portion) {
+        $.ajax({
+            url: '/api/threads/' + portion,
+            dataType: 'json',
+            cache: true,
+            success: function (data) {
+                this.setState({data: data})
+            }.bind(this),
+            error: function (xhr, status, err) {
+                console.error('api/threads/' + portion, status, err.toString());
+            }.bind(this)
+        });
+    },
+
+    componentDidMount: function () {
+        this.loadThreadsList(0); //jQery scroll
+    },
+
+    updateCurrentThread: function (thread) {
+        this.setState({
+            currentThread: thread,
+            currentView: 'threadView'
+        })
+    },
+
+    componentWillUnmount: function () {
+        this.incomingMessagesListener('off');
+    },
+
+    render: function () {
+        var threads = this.state.data.map(thread => {
+            var updateCurrentThread = this.updateCurrentThread;
+            let time = getTimePassed(thread.timestamp);
+            return (
+                <div className="row thread" key={thread.threadID}>
+                    <ThreadParticipants a={updateCurrentThread}
+                                        b={thread.threadID}
+                                        ids={thread.participantIDs}
+                                        currentUserID={this.state.currentUserID}
+                                        ref="threadParticipants"
+                    />
+                    <p>{thread.snippet}</p>
+                    <img src={thread.imageScr}/>
+                </div>
+            );
+        });
+
+
+        return (
+            <div className=" scroll-area-container columns">
+                <div
+                    className={this.state.currentView === 'threadsListView' ?
+                                "inline-list uiScrollableArea small-12 columns hidden" :
+                                "inline-list uiScrollableArea small-12 columns"}>
+                    <Thread
+                        currentThread={this.state.currentThread}
+                        currentUserID={this.state.currentUserID}
+                        ref="thread"
+                        className={this.state.currentView === 'threadsListView' ? "hidden" : ""}
+                    />
+                </div>
+
+                <div className={this.state.currentView === 'threadsListView' ?
+                 "inline-list uiScrollableArea small-12 columns" :
+                 "inline-list uiScrollableArea small-12 columns hidden"}
+                >
+                    {threads}
+                </div>
+            </div>
+
+        );
+    }
+});
+
 
 var Thread = React.createClass({
     getInitialState: function () {
@@ -214,22 +400,17 @@ var Thread = React.createClass({
             )
         });
         return this.state.currentThread ? (
-            <div className="full-width">
-                <ul className="inline-list uiScrollableArea">
-                    {messages}
-                    <li>
-                        <form onSubmit={this.handleSubmit} className="row" action="">
-                            <input className="message-input" id={this.state.currentThread} autoComplete="off"
-                                   placeholder="input new message"/>
-                        </form>
-                    </li>
-                </ul>
-
-            </div>
+            <ul>
+                {messages}
+                <li className="row">
+                    <form onSubmit={this.handleSubmit} className="row" action="">
+                        <input className="message-input" id={this.state.currentThread} autoComplete="off"
+                               placeholder="input new message"/>
+                    </form>
+                </li>
+            </ul>
         ) : (
-            <div>
-                {"choose a thread to display"}
-            </div>
+            <div className="hidden"></div>
         )
     }
 });
@@ -348,146 +529,6 @@ var ThreadParticipants = React.createClass({
     }
 });
 
-var ThreadsList = React.createClass({
-    getInitialState: function () {
-        this.incomingMessagesListener();
-        return {
-            data: [],
-            currentThread: null,
-            newMessageArrived: false,
-            currentUserID: null,
-            lastMessageID: null
-        };
-    },
-
-    componentWillMount: function () {
-        this.getCurrentUserID();
-        socket.on('chat message incoming', (msg) =>
-            this.incomingMessageHandler(JSON.parse(msg))
-        )
-    },
-
-    getCurrentUserID: function () {
-        $.ajax({
-            url: '/api/currentUserID/',
-            cache: true,
-            success: function (data) {
-                this.setState({
-                    currentUserID: data
-                })
-            }.bind(this),
-            error: function (xhr, status, err) {
-                console.error('/api/currentUserID', status, err.toString());
-            }.bind(this)
-        });
-    },
-
-    incomingMessagesListener: function () {
-        $.ajax({
-            url: '/api/listen',
-            success: function () {
-                console.log("incomingMessagesListener started");
-            }.bind(this),
-            error: function (xhr, status, err) {
-                console.error('api/listen', status, err.toString());
-            }.bind(this)
-        });
-    },
-
-    incomingMessageHandler: function (message) {
-        if (message.messagedID !== this.state.lastMessageID) { // API TYPO :(
-            this.loadThreadsList();
-            this.setState({
-                lastMessageID: message.messagedID
-            });
-            this.refs['thread'].appendIncomingMessageOnFronted(message);
-            this.handleNotification(message);
-        }
-    },
-
-    handleNotification: function (message) {
-        if (!Notification) {
-            alert('Desktop notifications not available in your browser. Try Chromium.');
-            return;
-        }
-        if (Notification.permission !== "granted")
-            Notification.requestPermission();
-        else {
-            var notification = new Notification(participantsRepository[message.senderID].firstName, {
-                icon: participantsRepository[message.senderID].photo,
-                body: message.body,
-            });
-            notification.onclick = function () {
-                this.setState({
-                    currentThread: message.thread
-                })
-            }.bind(this);
-        }
-    },
-
-    loadThreadsList: function (portion) {
-        $.ajax({
-            url: '/api/threads/' + portion,
-            dataType: 'json',
-            cache: true,
-            success: function (data) {
-                this.setState({data: data})
-            }.bind(this),
-            error: function (xhr, status, err) {
-                console.error('api/threads/' + portion, status, err.toString());
-            }.bind(this)
-        });
-    },
-
-    componentDidMount: function () {
-        this.loadThreadsList(0); //jQery scroll
-    },
-
-    updateCurrentThread: function (thread) {
-        this.setState({
-            currentThread: thread
-        })
-    },
-
-    componentWillUnmount: function () {
-        this.incomingMessagesListener('off');
-    },
-
-    render: function () {
-        var threads = this.state.data.map(thread => {
-            var updateCurrentThread = this.updateCurrentThread;
-            let time = getTimePassed(thread.timestamp);
-            return (
-                <div className="row thread" key={thread.threadID}>
-                    <ThreadParticipants a={updateCurrentThread}
-                                        b={thread.threadID}
-                                        className="small-2 small-centered columns"
-                                        ids={thread.participantIDs}
-                                        currentUserID={this.state.currentUserID}
-                                        ref="threadParticipants"
-                    />
-                </div>
-            );
-        });
-        return (
-            <div className="scroll-area-container columns">
-                <div className=" inline-list uiScrollableArea">
-                    <div className="">
-                        {threads}
-                    </div>
-                </div>
-                <div className="scroll-area-container columns end">
-                    <Thread
-                        currentThread={this.state.currentThread}
-                        currentUserID={this.state.currentUserID}
-                        ref="thread"
-                    />
-                </div>
-            </div>
-        );
-    }
-});
-
 var AppStatus = React.createClass({
     getInitialState: function () {
         return {data: []};
@@ -582,7 +623,7 @@ function getTimePassed(threadTimestamp) {
     } else if (elapsed < msPerMonth) {
         return Math.round(elapsed / msPerDay) + ' d';
     } else if (elapsed < msPerYear) {
-        return Math.round(elapsed / msPerMonth) + ' mo';
+        return Math.round(elapsed / msPerMonth) + ' Mo';
     } else {
         return Math.round(elapsed / msPerYear) + ' Y';
     }

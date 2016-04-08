@@ -7,10 +7,14 @@ var io = require('socket.io').listen(server);
 var bodyParser = require('body-parser');
 var messenger = require('facebook-chat-api');
 var session = require('express-session');
+var redisStore = require('connect-redis')(session);
 var cookieParser = require('cookie-parser');
 
 app.use(cookieParser());
-app.use(session({secret: 'veryverysecrettoken'}));
+app.use(session({
+    store: new redisStore(),
+    secret: 'sssecret'
+}));
 app.use(require('express-promise')());
 app.use('/', express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
@@ -113,7 +117,7 @@ app.get('/api/logout', function (req, res) {
 
 app.get('/api/threads/:portion', function (req, res) {
     var start = req.params.portion;
-    var end = start + 5;
+    var end = start + 25;
     messenger({appState: sess.apiSession}, function callback(err, api) {
         if (api) {
             api.getThreadList(start, end, function (err, data) {

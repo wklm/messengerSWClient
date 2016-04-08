@@ -1,20 +1,27 @@
+:root {
+    --menu-bar-height: 5rem;
+}
+
 body {
     font-family: "Helvetica Neue", "Segoe UI", Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     line-height: 1;
-    margin: 0;
     padding: 1rem;
     max-height: 100%;
+    width: 100%;
     position: fixed;
     overflow: hidden;
 }
-
 .thread-time {
     font-size: 10px;
 }
 
 .full-width {
     width: 100%;
+}
+
+.hidden {
+    display: none;
 }
 
 .scroll-area-container {
@@ -76,8 +83,10 @@ body {
     width: 100%;
     margin-bottom: .5rem;
     padding-bottom: 2rem;
-    padding-top: 1rem;
+    padding-top: 0rem;
     padding-left: 1rem;
+    margin-top: 5rem;
+    bottom: 5rem;;
 }
 
 .uiScrollableArea {
@@ -86,11 +95,28 @@ body {
     overflow-y: scroll;
     scroll-behavior: smooth;
     direction: ltr;
-    height: 100%;
+    height: calc(100% - var(--menu-bar-height));
     position: relative;
 
 }
 
+.menu-bar {
+    background: lightyellow;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: space-between;
+    align-items: center;
+    align-content: center;
+    margin: 0;
+    padding: 0;
+    height: var(--menu-bar-height);
+}
+
+.menu-bar-element {
+    align-self: center;
+    margin: auto;
+}
 
 .me {
     color: lightgray;
@@ -127,3 +153,4 @@ body {
 .own-message-background {
     background: tomato;
 }
+
