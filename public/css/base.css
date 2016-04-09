@@ -119,7 +119,6 @@ figcaption {
     margin: 0;
     padding: 0;
     height: var(--menu-bar-height);
-    margin-bottom: 1rem;
 }
 
 .mdl-button {

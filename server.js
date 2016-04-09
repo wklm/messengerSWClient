@@ -101,6 +101,7 @@ app.get('/api/listen', function (req, res) { //TODO: Prevent multiple socket ins
                     date: Date.now()
                 };
                 io.emit('chat message incoming', JSON.stringify(message));
+                console.log(message);
             }
         });
     })

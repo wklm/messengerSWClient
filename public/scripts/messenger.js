@@ -36,6 +36,7 @@ var Messenger = React.createClass({
         this.setState({
             currentView: 'threadsListView'
         })
+        this.refs['threadsList'].resetCurrentThread();
     },
 
     logout: function () {
@@ -87,6 +88,7 @@ var ThreadsList = React.createClass({
     },
 
     componentWillReceiveProps: function (nextProp) {
+        console.log("componentWillReceiveProps");
         this.setState({
             currentView: nextProp.currentView
         })
@@ -97,6 +99,7 @@ var ThreadsList = React.createClass({
     },
 
     componentWillMount: function () {
+        console.log("componentWillMount");
         this.getCurrentUserID();
         socket.on('chat message incoming', (msg) =>
             this.incomingMessageHandler(JSON.parse(msg))
@@ -104,6 +107,7 @@ var ThreadsList = React.createClass({
     },
 
     getCurrentUserID: function () {
+        console.log("getCurrentUserID")
         $.ajax({
             url: '/api/currentUserID/',
             cache: true,
@@ -116,6 +120,13 @@ var ThreadsList = React.createClass({
                 console.error('/api/currentUserID', status, err.toString());
             }.bind(this)
         });
+    },
+
+    resetCurrentThread: function () {
+      this.setState({
+          currentThread: null
+      })
+        console.log("reset currentThread on ThreadsList")
     },
 
     incomingMessagesListener: function () {
@@ -131,17 +142,21 @@ var ThreadsList = React.createClass({
     },
 
     incomingMessageHandler: function (message) {
+        console.log("incomingMessageHandler");
         if (message.messagedID !== this.state.lastMessageID) { // API TYPO :(
-            this.loadThreadsList();
+            //this.loadThreadsList();
             this.setState({
                 lastMessageID: message.messagedID
             });
-            this.refs['thread'].appendIncomingMessageOnFronted(message);
+            if (this.refs['thread']) {
+                this.refs['thread'].appendIncomingMessageOnFronted(message); // TODO: causes memory leak
+            }
             this.handleNotification(message);
         }
     },
 
     handleNotification: function (message) {
+        console.log("handleNotification");
         if (!Notification) {
             alert('Desktop notifications not available in your browser. Try Chromium.');
             return;
@@ -162,6 +177,7 @@ var ThreadsList = React.createClass({
     },
 
     loadThreadsList: function (portion) {
+        console.log("loadThreadsList");
         $.ajax({
             url: '/api/threads/' + portion,
             dataType: 'json',
@@ -180,6 +196,7 @@ var ThreadsList = React.createClass({
     },
 
     updateCurrentThread: function (thread) {
+        console.log("updateCurrentThread");
         this.setState({
             currentThread: thread,
             currentView: 'threadView'
@@ -222,7 +239,7 @@ var ThreadsList = React.createClass({
                     <Thread
                         currentThread={this.state.currentThread}
                         currentUserID={this.state.currentUserID}
-                        updateThreadsList={this.loadThreadsList()}
+                        //updateThreadsList={this.loadThreadsList()}
                         ref="thread"
                         className={this.state.currentView === 'threadsListView' ? "hidden" : ""}
                     />
@@ -279,7 +296,8 @@ var Thread = React.createClass({
             messageQueue: tempQueue
         });
         if (this.appendOutgoingMessageOnFronted(message)) {
-            this.refs.updateThreadsList();
+            console.log("update threadsList z threada");
+            //this.refs.updateThreadsList(); // TODO: causes memory leak
         }
     },
 
@@ -504,7 +522,7 @@ var ThreadParticipants = React.createClass({
                             id: k,
                             fullName: data[k]['name'],
                             firstName: data[k]['firstName'],
-                            photo: 'https://graph.facebook.com/' + k + '/picture?width=300',
+                            photo: 'https://graph.facebook.com/' + k + '/picture?width=200',
                             profileUrl: data[k]['profileUrl']
                         };
                         if (participant.id !== this.props.currentUserID) {

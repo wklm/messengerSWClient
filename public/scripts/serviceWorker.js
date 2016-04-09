@@ -24,7 +24,7 @@
         //console.log(event);
     })
 
-})(self);
+    })(self);
 
 
 
