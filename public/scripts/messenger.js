@@ -47,8 +47,8 @@ var Messenger = React.createClass({
         return this.state.authenticated ? (
             <div>
                 <ul className="menu-bar full-width">
-                    <li className="menu-bar-element hidden" id="go-back-button">
-                        <button onClick={this.goBack}> back</button>
+                    <li className="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect menu-bar-element hidden" id="go-back-button">
+                        <button onClick={this.goBack}> {"<<<"} </button>
                     </li>
                     <li className="menu-bar-element">
                         <button onClick={this.logout}> logout</button>
@@ -89,6 +89,10 @@ var ThreadsList = React.createClass({
         this.setState({
             currentView: nextProp.currentView
         })
+        if ( nextProp.currentView === 'threadsListView') {
+            jQuery('#go-back-button').addClass('hidden');
+
+        }
     },
 
     componentWillMount: function () {
@@ -340,12 +344,12 @@ var Thread = React.createClass({
         });
     },
 
-    componentWillUnmount: function() {
-      this.setState({
-          messagesCache: [],
-          currentThread: null,
+    componentWillUnmount: function () {
+        this.setState({
+            messagesCache: [],
+            currentThread: null,
 
-      });
+        });
     },
 
     loadThread: function (thread, portion) {
@@ -525,19 +529,28 @@ var ThreadParticipants = React.createClass({
         var participants = this.state.data.map(participant => {
             return (
                 <div onClick={this.props.a.bind(null,this.props.b)}
-                     key={participant.id}>
-                    <p >
-                        {participant.firstName}
-                    </p>
-                    <img src={participant.photo}
-                         alt={participant.name + " photo"}/>
+                     key={participant.id}
+                     className="row">
+                    <div>
+                        <img src={participant.photo}
+                             alt={participant.name + " photo"}
+                             className="row"/>
+                        <p className="row">
+                            {participant.firstName}
+                        </p>
+                    </div>
                 </div>
             );
         });
 
-        return (
-            <div>
+        return participants.length < 4 ? (
+            <div className="small-12 columns">
                 {participants}
+            </div>
+        ) : (
+            <div className="small-12 columns">
+                {participants.slice(0, 3)}
+                <p>and {participants.length - 3} others</p>
             </div>
         );
     }
@@ -602,7 +615,7 @@ var FriendsList = React.createClass({
             );
         });
         return (
-            <div className="commentList">
+            <div className="">
                 {friends}
             </div>
         );

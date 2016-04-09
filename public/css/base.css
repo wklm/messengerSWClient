@@ -113,6 +113,10 @@ li {
     margin-bottom: 1rem;
 }
 
+.mdl-button {
+    margin: auto;
+}
+
 .menu-bar-element {
     align-self: center;
     margin: auto;
