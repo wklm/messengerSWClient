@@ -7,41 +7,21 @@ var io = require('socket.io').listen(server);
 var bodyParser = require('body-parser');
 var messenger = require('facebook-chat-api');
 var session = require('express-session');
-//var redisStore = require('connect-redis')(session);
-var mysql = require('mysql')
-var MySQLStore = require('express-mysql-session')(session);
+var redisStore = require('connect-redis')(session);
 var cookieParser = require('cookie-parser');
 
 app.use(cookieParser());
-
-
-var connection = mysql.createConnection({
-    host: 'eu-cdbr-azure-west-d.cloudapp.net',
-    port: 3306,
-    user: 'b2576407959ab3',
-    password: '3b50724e',
-    database: 'acsm_e62e44a20fbfbc6'
-});
-
-var sessionStore = new MySQLStore({}/* session store options */, connection);
-
-
-
 app.use(session({
-    key: 'session_cookie_name',
-    secret: 'session_cookie_secret',
-    store: sessionStore,
-    resave: true,
-    saveUninitialized: true
+    store: new redisStore(),
+    secret: 'sssecret'
 }));
-
-
 app.use(require('express-promise')());
 app.use('/', express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: true}));
 
 var sess;
+
 
 function login(email, password) {
     messenger({email: email, password: password}, function callback(err, api) {
