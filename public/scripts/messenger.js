@@ -47,7 +47,8 @@ var Messenger = React.createClass({
         return this.state.authenticated ? (
             <div>
                 <ul className="menu-bar full-width">
-                    <li className="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect menu-bar-element hidden" id="go-back-button">
+                    <li className="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect menu-bar-element hidden"
+                        id="go-back-button">
                         <button onClick={this.goBack}> {"<<<"} </button>
                     </li>
                     <li className="menu-bar-element">
@@ -89,7 +90,7 @@ var ThreadsList = React.createClass({
         this.setState({
             currentView: nextProp.currentView
         })
-        if ( nextProp.currentView === 'threadsListView') {
+        if (nextProp.currentView === 'threadsListView') {
             jQuery('#go-back-button').addClass('hidden');
 
         }
@@ -221,6 +222,7 @@ var ThreadsList = React.createClass({
                     <Thread
                         currentThread={this.state.currentThread}
                         currentUserID={this.state.currentUserID}
+                        updateThreadsList={this.loadThreadsList()}
                         ref="thread"
                         className={this.state.currentView === 'threadsListView' ? "hidden" : ""}
                     />
@@ -276,7 +278,9 @@ var Thread = React.createClass({
         this.setState({
             messageQueue: tempQueue
         });
-        this.appendOutgoingMessageOnFronted(message);
+        if (this.appendOutgoingMessageOnFronted(message)) {
+            this.refs.updateThreadsList();
+        }
     },
 
     appendOutgoingMessageOnFronted: function (message) { //update
@@ -310,6 +314,7 @@ var Thread = React.createClass({
                 messagesCache: messages
             })
         }
+        return true;
     },
 
     componentWillReceiveProps: function (nextProp) { //update

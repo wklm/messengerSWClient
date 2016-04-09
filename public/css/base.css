@@ -20,6 +20,7 @@ li {
 figcaption {
     width: var(--thread-list-photo-width);
     text-align: center;
+    padding-top: .2rem;
 }
 
 .thread-time {
