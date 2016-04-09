@@ -499,9 +499,11 @@ var ThreadParticipants = React.createClass({
                             id: k,
                             fullName: data[k]['name'],
                             firstName: data[k]['firstName'],
-                            photo: data[k]['thumbSrc']
+                            photo: 'https://graph.facebook.com/' + k + '/picture?width=300',
+                            profileUrl: data[k]['profileUrl']
                         };
                         if (participant.id !== this.props.currentUserID) {
+
                             participants.push(participant);
                             participantsRepository[k] = participant;
                             this.setState({
@@ -531,14 +533,14 @@ var ThreadParticipants = React.createClass({
                 <div onClick={this.props.a.bind(null,this.props.b)}
                      key={participant.id}
                      className="row">
-                    <div>
+                    <figure>
                         <img src={participant.photo}
-                             alt={participant.name + " photo"}
-                             className="row"/>
-                        <p className="row">
+                             alt={participant.fullName + " photo"}
+                             className="thread-list-photo"/>
+                        <figcaption>
                             {participant.firstName}
-                        </p>
-                    </div>
+                        </figcaption>
+                    </figure>
                 </div>
             );
         });

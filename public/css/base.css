@@ -1,12 +1,12 @@
 :root {
     --menu-bar-height: 5rem;
+    --thread-list-photo-width: 100px;
 }
 
 body {
     font-family: "Helvetica Neue", "Segoe UI", Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     line-height: 1;
-    padding: 1rem;
     max-height: 100%;
     width: 100%;
     position: fixed;
@@ -16,6 +16,12 @@ body {
 li {
     list-style: none;
 }
+
+figcaption {
+    width: var(--thread-list-photo-width);
+    text-align: center;
+}
+
 .thread-time {
     font-size: 10px;
 }
@@ -44,6 +50,8 @@ li {
 
 .thread-list-photo {
     border-radius: 50%;
+    width: var(--thread-list-photo-width);
+    height: var(--thread-list-photo-width);
 }
 
 .thread-list-name {
