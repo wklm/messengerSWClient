@@ -55,14 +55,11 @@ var Messenger = React.createClass({
                     <li className="menu-bar-element">
                         <button onClick={this.logout}> logout</button>
                     </li>
-
                 </ul>
                 <div className="row">
                     <ThreadsList
                         currentView={this.state.currentView}
-                        ref="threadsList"
-
-                    />
+                        ref="threadsList"/>
                 </div>
             </div>
         ) : (
@@ -78,13 +75,24 @@ var ThreadsList = React.createClass({
     getInitialState: function () {
         this.incomingMessagesListener();
         return {
-            data: [],
+            data: [], //TODO: should be a dictionary with key threadID
             currentThread: null,
             newMessageArrived: false,
             currentUserID: null,
             lastMessageID: null,
             currentView: 'threadsListView'
         };
+    },
+
+    appendIncomingMessage: function (message) {
+        var updatedList = [];
+        for (var i = 0; i < this.state.data.length; i++) {
+            if (message.thread === this.state.data[i].threadID) {
+                this.state.data[i].snippet = message.body;
+                this.state.data[i].serverTimestamp = Date.now();
+                this.state.data.splice(0, 0, this.state.data.splice(i, 1)[0] ); // :)
+            }
+        }
     },
 
     componentWillReceiveProps: function (nextProp) {
@@ -123,9 +131,9 @@ var ThreadsList = React.createClass({
     },
 
     resetCurrentThread: function () {
-      this.setState({
-          currentThread: null
-      })
+        this.setState({
+            currentThread: null
+        })
         console.log("reset currentThread on ThreadsList")
     },
 
@@ -142,9 +150,9 @@ var ThreadsList = React.createClass({
     },
 
     incomingMessageHandler: function (message) {
-        console.log("incomingMessageHandler");
         if (message.messagedID !== this.state.lastMessageID) { // API TYPO :(
-            //this.loadThreadsList();
+            console.log("incomingMessageHandler");
+            this.appendIncomingMessage(message);
             this.setState({
                 lastMessageID: message.messagedID
             });
