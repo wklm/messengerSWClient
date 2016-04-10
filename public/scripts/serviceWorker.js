@@ -19,6 +19,8 @@
     toolbox.router.get('/css', toolbox.cacheFirst);
     toolbox.router.get('/react', toolbox.cacheFirst);
     toolbox.router.get('/sw-toolbox', toolbox.cacheFirst);
+    toolbox.router.get('https://graph.facebook.com/*', toolbox.cacheFirst);
+
 
     self.addEventListener('fetch', function (event) { // may be global
         //console.log(event);

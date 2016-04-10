@@ -52,7 +52,7 @@ var Messenger = React.createClass({
                         id="go-back-button">
                         <button onClick={this.goBack}> {"<<<"} </button>
                     </li>
-                    <li className="menu-bar-element">
+                    <li className="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect menu-bar-element">
                         <button onClick={this.logout}> logout</button>
                     </li>
                 </ul>
@@ -226,18 +226,19 @@ var ThreadsList = React.createClass({
             let time = getTimePassed(thread.timestamp);
             return (
                 <div className="row thread" key={thread.threadID}>
-                    <ThreadParticipants a={updateCurrentThread}
-                                        b={thread.threadID}
-                                        ids={thread.participantIDs}
-                                        currentUserID={this.state.currentUserID}
-                                        ref="threadParticipants"
-                    />
-                    <p>{thread.snippet}</p>
-                    <p>{getTimePassed(thread.serverTimestamp)} ago</p>
+                    <div className="small-3 columns">
+                        <ThreadParticipants a={updateCurrentThread}
+                                            b={thread.threadID}
+                                            ids={thread.participantIDs}
+                                            currentUserID={this.state.currentUserID}
+                                            ref="threadParticipants"
+                        />
+                    </div>
+                    <p className="small-7 columns threads-list-snippet">{thread.snippet}</p>
+                    <p className="small-2 columns">{getTimePassed(thread.serverTimestamp)} ago</p>
                 </div>
             );
         });
-
 
         return (
             <div className=" scroll-area-container columns">

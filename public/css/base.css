@@ -1,5 +1,5 @@
 :root {
-    --menu-bar-height: 5rem;
+    --menu-bar-height: 6rem;
     --thread-list-photo-width: 100px;
 }
 
@@ -62,9 +62,14 @@ figcaption {
 
 .thread {
     border-bottom: solid 1px;
-
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
+.threads-list-snippet {
+    font-size: 1.5rem;
+}
 /* Message */
 
 .message-sender {
