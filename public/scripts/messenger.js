@@ -84,15 +84,18 @@ var ThreadsList = React.createClass({
         };
     },
 
-    appendIncomingMessage: function (message) {
-        var updatedList = [];
+    appendNewMessage: function (message) {
+
         for (var i = 0; i < this.state.data.length; i++) {
             if (message.thread === this.state.data[i].threadID) {
                 this.state.data[i].snippet = message.body;
                 this.state.data[i].serverTimestamp = Date.now();
-                this.state.data.splice(0, 0, this.state.data.splice(i, 1)[0] ); // :)
+                this.state.data.splice(0, 0, this.state.data.splice(i, 1)[0]); // :)
             }
+
         }
+
+
     },
 
     componentWillReceiveProps: function (nextProp) {
@@ -152,7 +155,7 @@ var ThreadsList = React.createClass({
     incomingMessageHandler: function (message) {
         if (message.messagedID !== this.state.lastMessageID) { // API TYPO :(
             console.log("incomingMessageHandler");
-            this.appendIncomingMessage(message);
+            this.appendNewMessage(message);
             this.setState({
                 lastMessageID: message.messagedID
             });
@@ -247,7 +250,7 @@ var ThreadsList = React.createClass({
                     <Thread
                         currentThread={this.state.currentThread}
                         currentUserID={this.state.currentUserID}
-                        //updateThreadsList={this.loadThreadsList()}
+                        updateThreadsList={this.appendNewMessage}
                         ref="thread"
                         className={this.state.currentView === 'threadsListView' ? "hidden" : ""}
                     />
@@ -304,8 +307,7 @@ var Thread = React.createClass({
             messageQueue: tempQueue
         });
         if (this.appendOutgoingMessageOnFronted(message)) {
-            console.log("update threadsList z threada");
-            //this.refs.updateThreadsList(); // TODO: causes memory leak
+            this.props.updateThreadsList(message);
         }
     },
 
@@ -321,6 +323,7 @@ var Thread = React.createClass({
                 lastSent: message
             })
         }
+        return true;
     },
 
     appendIncomingMessageOnFronted: function (msg) {
