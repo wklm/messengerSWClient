@@ -85,17 +85,15 @@ var ThreadsList = React.createClass({
     },
 
     appendNewMessage: function (message) {
-
         for (var i = 0; i < this.state.data.length; i++) {
             if (message.thread === this.state.data[i].threadID) {
                 this.state.data[i].snippet = message.body;
                 this.state.data[i].serverTimestamp = Date.now();
                 this.state.data.splice(0, 0, this.state.data.splice(i, 1)[0]); // :)
+                return;
             }
-
         }
-
-
+        this.loadThreadsList(0);
     },
 
     componentWillReceiveProps: function (nextProp) {
