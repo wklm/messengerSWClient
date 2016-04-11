@@ -39,6 +39,21 @@ var Messenger = React.createClass({
         this.refs['threadsList'].resetCurrentThread();
     },
 
+    updateView: function (viewName) {
+        console.log("view updated", viewName);
+        this.setState({
+            currentView: viewName
+        })
+        switch (viewName) {
+            case "threadsList":
+                jQuery('#go-back-button').addClass('hidden');
+                break;
+            case "threadView":
+                jQuery('#go-back-button').removeClass('hidden');
+                break;
+        }
+    },
+
     logout: function () {
         this.setState({authenticated: false});
         localStorage.setItem('auth', false);
@@ -59,6 +74,7 @@ var Messenger = React.createClass({
                 <div className="row">
                     <ThreadsList
                         currentView={this.state.currentView}
+                        updateViewOnMessengerComponent={this.updateView}
                         ref="threadsList"/>
                 </div>
             </div>
@@ -98,12 +114,16 @@ var ThreadsList = React.createClass({
 
     componentWillReceiveProps: function (nextProp) {
         console.log("componentWillReceiveProps");
-        this.setState({
-            currentView: nextProp.currentView
-        })
-        if (nextProp.currentView === 'threadsListView') {
-            jQuery('#go-back-button').addClass('hidden');
+        if (nextProp) {
+            if (this.state.currentView !== nextProp.currentView) {
+                this.setState({
+                    currentView: nextProp.currentView
+                })
+            }
+            if (nextProp.currentView === 'threadsListView') {
+                jQuery('#go-back-button').addClass('hidden');
 
+            }
         }
     },
 
@@ -140,13 +160,7 @@ var ThreadsList = React.createClass({
 
     incomingMessagesListener: function () {
         $.ajax({
-            url: '/api/listen',
-            success: function () {
-                console.log("incomingMessagesListener started");
-            }.bind(this),
-            error: function (xhr, status, err) {
-                console.error('api/listen', status, err.toString());
-            }.bind(this)
+            url: '/api/listen'
         });
     },
 
@@ -154,11 +168,9 @@ var ThreadsList = React.createClass({
         if (message.messagedID !== this.state.lastMessageID) { // API TYPO :(
             console.log("incomingMessageHandler");
             this.appendNewMessage(message);
-            this.setState({
-                lastMessageID: message.messagedID
-            });
+            this.state.lastMessageID = message.messagedID;
             if (this.refs['thread']) {
-                this.refs['thread'].appendIncomingMessageOnFronted(message); // TODO: causes memory leak
+                this.refs['thread'].appendIncomingMessageOnFronted(message);
             }
             this.handleNotification(message);
         }
@@ -178,8 +190,10 @@ var ThreadsList = React.createClass({
                 body: message.body,
             });
             notification.onclick = function () {
+                this.props.updateViewOnMessengerComponent('threadView');
                 this.setState({
-                    currentThread: message.thread
+                    currentThread: message.thread,
+                    currentView: 'thhreadView'
                 })
             }.bind(this);
         }
@@ -225,7 +239,7 @@ var ThreadsList = React.createClass({
             var updateCurrentThread = this.updateCurrentThread;
             let time = getTimePassed(thread.timestamp);
             return (
-                <div className="row thread" key={thread.threadID}>
+                <div className="row thread" key={thread.threadID} onClick={updateCurrentThread.bind(null,thread.threadID)}>
                     <div className="small-3 columns">
                         <ThreadParticipants a={updateCurrentThread}
                                             b={thread.threadID}
@@ -234,7 +248,7 @@ var ThreadsList = React.createClass({
                                             ref="threadParticipants"
                         />
                     </div>
-                    <p className="small-7 columns threads-list-snippet">{thread.snippet}</p>
+                    <p className="small-7 columns threads-list-snippet mdl-card__supporting-text">{thread.snippet}</p>
                     <p className="small-2 columns">{getTimePassed(thread.serverTimestamp)} ago</p>
                 </div>
             );
@@ -273,7 +287,6 @@ var Thread = React.createClass({
         return {
             messagesCache: [],
             currentThread: null,
-            lastMessage: null,
             lastSent: null,
             messageQueue: []
         }
@@ -310,18 +323,14 @@ var Thread = React.createClass({
         }
     },
 
-    appendOutgoingMessageOnFronted: function (message) { //update
+    appendOutgoingMessageOnFronted: function (message) {
         var messages = this.state.messagesCache;
         message.timestamp = Date.now();
         messages.push(message);
         this.setState({
-            messagesCache: messages
+            messagesCache: messages,
+            lastSent: message.own ? message : this.state.lastSent
         });
-        if (message.own) {
-            this.setState({ // TODO: Refactor
-                lastSent: message
-            })
-        }
         return true;
     },
 
@@ -352,31 +361,6 @@ var Thread = React.createClass({
         })
     },
 
-    getLastMessage: function () {
-        $.ajax({
-            url: '/api/threads/' + thread + '/message/' + 0,
-            dataType: 'json',
-            cache: true,
-            success: function (data) {
-                let message = {
-                    id: k,
-                    senderName: data['senderName'],
-                    body: data['body'],
-                    date: data['timestampDatetime'],
-                    timestamp: data['timestamp'],
-                    own: data['senderID'] === 'fbid:' + this.props.currentUserID
-                };
-
-                this.setState({
-                    lastMessage: message
-                })
-            }.bind(this),
-            error: function (xhr, status, err) {
-                console.error('/api/threads/' + thread + '/message/' + 0, status, err.toString());
-            }.bind(this)
-        });
-    },
-
     componentWillUnmount: function () {
         this.setState({
             messagesCache: [],
@@ -404,21 +388,17 @@ var Thread = React.createClass({
                             own: data[k]['senderID'] === 'fbid:' + this.props.currentUserID
                         };
                         threads.push(thread);
-                        this.setState({
-                            messagesCache: threads
-                        });
-                        if (data.length - 1 == k) {
-                            this.setState({
-                                lastMessage: thread
-                            })
-                        }
                     }
+                    this.setState({
+                        messagesCache: threads
+                    });
                 }.bind(this),
                 error: function (xhr, status, err) {
                     console.error('/api/threads/' + thread + '/portion/' + portion, status, err.toString());
                 }.bind(this)
             });
         }
+
     },
 
     render: function () {
@@ -449,7 +429,7 @@ var Thread = React.createClass({
                 </li>
             )
         });
-        return this.state.currentThread ? (
+        return (
             <ul>
                 {messages}
                 <li className="row">
@@ -460,8 +440,6 @@ var Thread = React.createClass({
                     </form>
                 </li>
             </ul>
-        ) : (
-            <div className="hidden"></div>
         )
     }
 });
@@ -536,14 +514,13 @@ var ThreadParticipants = React.createClass({
                             profileUrl: data[k]['profileUrl']
                         };
                         if (participant.id !== this.props.currentUserID) {
-
                             participants.push(participant);
                             participantsRepository[k] = participant;
-                            this.setState({
-                                data: participants,
-                            });
                         }
                     }
+                    this.setState({
+                        data: participants
+                    });
                 }.bind(this),
                 error: function (xhr, status, err) {
                     console.error('api/threads/', status, err.toString());
@@ -665,7 +642,10 @@ ReactDOM.render(
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw', {
         scope: '/'
-    })
+    });
+    navigator.serviceWorker.ready.then(function (swRegistration) {
+        return swRegistration.sync.register('myFirstSync');
+    });
 }
 
 function getTimePassed(threadTimestamp) {

@@ -21,12 +21,11 @@
     toolbox.router.get('/sw-toolbox', toolbox.cacheFirst);
     toolbox.router.get('https://graph.facebook.com/*', toolbox.cacheFirst);
 
+    self.addEventListener('sync', function (event) { // may be global
+        console.log(event) // TODO: background sync
+    });
+})(self);
 
-    self.addEventListener('fetch', function (event) { // may be global
-        //console.log(event);
-    })
-
-    })(self);
 
 
 
