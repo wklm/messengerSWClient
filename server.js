@@ -34,7 +34,7 @@ io.on('connection', function (socket) {
     socket.on('chat message outgoing', function (msg) {
         message = JSON.parse(msg);
         messenger({appState: sess.apiSession}, function callback(err, api) {
-            if (err) return console.error(err);
+            if (err)  console.error(err);
             if (message['body'] && message['thread']) {
                 api.sendMessage(message['body'], message['thread']);
             }

@@ -239,17 +239,15 @@ var ThreadsList = React.createClass({
             var updateCurrentThread = this.updateCurrentThread;
             let time = getTimePassed(thread.timestamp);
             return (
-                <div className="row thread" key={thread.threadID} onClick={updateCurrentThread.bind(null,thread.threadID)}>
+                <div className="row thread" key={thread.threadID}
+                     onClick={updateCurrentThread.bind(null,thread.threadID)}>
                     <div className="small-3 columns">
-                        <ThreadParticipants a={updateCurrentThread}
-                                            b={thread.threadID}
-                                            ids={thread.participantIDs}
+                        <ThreadParticipants ids={thread.participantIDs}
                                             currentUserID={this.state.currentUserID}
-                                            ref="threadParticipants"
-                        />
+                                            ref="threadParticipants"/>
                     </div>
                     <p className="small-7 columns threads-list-snippet mdl-card__supporting-text">{thread.snippet}</p>
-                    <p className="small-2 columns">{getTimePassed(thread.serverTimestamp)} ago</p>
+                    <p className="small-2 columns end">{getTimePassed(thread.serverTimestamp)} ago</p>
                 </div>
             );
         });
@@ -288,6 +286,7 @@ var Thread = React.createClass({
             messagesCache: [],
             currentThread: null,
             lastSent: null,
+            lastReceived: null,
             messageQueue: []
         }
     },
@@ -295,14 +294,13 @@ var Thread = React.createClass({
     handleSubmit: function (e) {
         e.preventDefault();
         if (this.state.currentThread) {
-            var timestamp = Date.now();
             var message = {
                 id: this.state.messagesCache.length,
                 body: $('#' + this.state.currentThread).val(),
                 thread: this.state.currentThread,
                 senderName: 'you', //todo: name
                 own: true,
-                date: timestamp
+                date: Date.now()
             };
             if (message.body && message.thread) {
                 this.appendNewMessageToQueue(message);
@@ -313,42 +311,34 @@ var Thread = React.createClass({
 
     appendNewMessageToQueue: function (message) {
         socket.emit('chat message outgoing', JSON.stringify(message));
-        var tempQueue = this.state.messageQueue;
-        tempQueue.push(message);
-        this.setState({
-            messageQueue: tempQueue
-        });
+        this.state.messageQueue.push(message);
         if (this.appendOutgoingMessageOnFronted(message)) {
             this.props.updateThreadsList(message);
         }
     },
 
     appendOutgoingMessageOnFronted: function (message) {
-        var messages = this.state.messagesCache;
         message.timestamp = Date.now();
-        messages.push(message);
+        this.state.messagesCache.push(message);
         this.setState({
-            messagesCache: messages,
             lastSent: message.own ? message : this.state.lastSent
         });
         return true;
     },
 
     appendIncomingMessageOnFronted: function (msg) {
-        var messages = this.state.messagesCache;
-        var timestamp = Date.now();
-        var message = {
-            id: msg.messagedID,
-            body: msg.body,
-            thread: msg.thread,
-            senderName: participantsRepository[msg.senderID].firstName,
-            own: false,
-            date: timestamp
-        };
-        if (message.thread === this.state.currentThread) {
-            messages.push(message);
+        if (msg.thread === this.state.currentThread) {
+            var message = {
+                id: msg.messagedID,
+                body: msg.body,
+                thread: msg.thread,
+                senderName: participantsRepository[msg.senderID].firstName,
+                own: false,
+                date: Date.now()
+            };
+            this.state.messagesCache.push(message);
             this.setState({
-                messagesCache: messages
+                lastReceived: message
             })
         }
         return true;
@@ -363,8 +353,8 @@ var Thread = React.createClass({
 
     componentWillUnmount: function () {
         this.setState({
-            messagesCache: [],
-            currentThread: null,
+            messagesCache: null,
+            currentThread: null
 
         });
     },
@@ -383,7 +373,6 @@ var Thread = React.createClass({
                             senderName: data[k]['senderName'],
                             senderID: data[k]['senderID'],
                             body: data[k]['body'],
-                            //date: data[k]['timestampDatetime'],
                             timestamp: data[k]['timestamp'],
                             own: data[k]['senderID'] === 'fbid:' + this.props.currentUserID
                         };
@@ -540,9 +529,7 @@ var ThreadParticipants = React.createClass({
     render: function () {
         var participants = this.state.data.map(participant => {
             return (
-                <div onClick={this.props.a.bind(null,this.props.b)}
-                     key={participant.id}
-                     className="row">
+                <div key={participant.id} className="row">
                     <figure>
                         <img src={participant.photo}
                              alt={participant.fullName + " photo"}
@@ -565,34 +552,6 @@ var ThreadParticipants = React.createClass({
                 <p>and {participants.length - 3} others</p>
             </div>
         );
-    }
-});
-
-var AppStatus = React.createClass({
-    getInitialState: function () {
-        return {data: []};
-    },
-    loadSessionData: function () {
-        $.ajax({
-            url: '/api/app-status',
-            dataType: 'json',
-            cache: true,
-            success: function (data) {
-                this.setState({data: data})
-            }.bind(this),
-            error: function (xhr, status, err) {
-                console.error('api/login', status, err);
-            }.bind(this)
-        });
-    },
-
-    componentDidMount: function () {
-        this.loadSessionData();
-    },
-    render: function () {
-        return (
-            <SessionData data={this.state.data}/>
-        )
     }
 });
 
