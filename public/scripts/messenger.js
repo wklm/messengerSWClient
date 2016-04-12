@@ -40,7 +40,6 @@ var Messenger = React.createClass({
     },
 
     updateView: function (viewName) {
-        console.log("view updated", viewName);
         this.setState({
             currentView: viewName
         })
@@ -91,7 +90,7 @@ var ThreadsList = React.createClass({
     getInitialState: function () {
         this.incomingMessagesListener();
         return {
-            data: [], //TODO: should be a dictionary with key threadID
+            data: [], //TODO: should be a dictionary with the key threadID
             currentThread: null,
             newMessageArrived: false,
             currentUserID: null,
@@ -105,7 +104,7 @@ var ThreadsList = React.createClass({
             if (message.thread === this.state.data[i].threadID) {
                 this.state.data[i].snippet = message.body;
                 this.state.data[i].serverTimestamp = Date.now();
-                this.state.data.splice(0, 0, this.state.data.splice(i, 1)[0]); // :)
+                this.state.data.splice(0, 0, this.state.data.splice(i, 1)[0]);
                 return;
             }
         }
@@ -113,22 +112,16 @@ var ThreadsList = React.createClass({
     },
 
     componentWillReceiveProps: function (nextProp) {
-        console.log("componentWillReceiveProps");
-        if (nextProp) {
-            if (this.state.currentView !== nextProp.currentView) {
-                this.setState({
-                    currentView: nextProp.currentView
-                })
-            }
-            if (nextProp.currentView === 'threadsListView') {
-                jQuery('#go-back-button').addClass('hidden');
-
-            }
+        if (nextProp && this.state.currentView !== nextProp.currentView) {
+            this.setState({
+                currentView: nextProp.currentView
+            });
+            nextProp.currentView === 'threadsListView' ?
+                jQuery('#go-back-button').addClass('hidden') : jQuery('#go-back-button').remove('hidden');
         }
     },
 
     componentWillMount: function () {
-        console.log("componentWillMount");
         this.getCurrentUserID();
         socket.on('chat message incoming', (msg) =>
             this.incomingMessageHandler(JSON.parse(msg))
@@ -136,7 +129,6 @@ var ThreadsList = React.createClass({
     },
 
     getCurrentUserID: function () {
-        console.log("getCurrentUserID")
         $.ajax({
             url: '/api/currentUserID/',
             cache: true,
@@ -155,7 +147,6 @@ var ThreadsList = React.createClass({
         this.setState({
             currentThread: null
         })
-        console.log("reset currentThread on ThreadsList")
     },
 
     incomingMessagesListener: function () {
@@ -166,10 +157,9 @@ var ThreadsList = React.createClass({
 
     incomingMessageHandler: function (message) {
         if (message.messagedID !== this.state.lastMessageID) { // API TYPO :(
-            console.log("incomingMessageHandler");
             this.appendNewMessage(message);
             this.state.lastMessageID = message.messagedID;
-            if (this.refs['thread']) {
+            if (this.refs['thread']) { // check if Thread component mounted
                 this.refs['thread'].appendIncomingMessageOnFronted(message);
             }
             this.handleNotification(message);
@@ -177,9 +167,7 @@ var ThreadsList = React.createClass({
     },
 
     handleNotification: function (message) {
-        console.log("handleNotification");
         if (!Notification) {
-            alert('Desktop notifications not available in your browser. Try Chromium.');
             return;
         }
         if (Notification.permission !== "granted")
@@ -200,7 +188,6 @@ var ThreadsList = React.createClass({
     },
 
     loadThreadsList: function (portion) {
-        console.log("loadThreadsList");
         $.ajax({
             url: '/api/threads/' + portion,
             dataType: 'json',
@@ -215,11 +202,10 @@ var ThreadsList = React.createClass({
     },
 
     componentDidMount: function () {
-        this.loadThreadsList(0); //jQery scroll
+        this.loadThreadsList(0); //TODO: add jQery scroll
     },
 
     updateCurrentThread: function (thread) {
-        console.log("updateCurrentThread");
         this.setState({
             currentThread: thread,
             currentView: 'threadView'
@@ -269,16 +255,13 @@ var ThreadsList = React.createClass({
 
                 <div className={this.state.currentView === 'threadsListView' ?
                  "inline-list uiScrollableArea small-12 columns" :
-                 "inline-list uiScrollableArea small-12 columns hidden"}
-                >
+                 "inline-list uiScrollableArea small-12 columns hidden"}>
                     {threads}
                 </div>
             </div>
-
         );
     }
 });
-
 
 var Thread = React.createClass({
     getInitialState: function () {
@@ -374,7 +357,8 @@ var Thread = React.createClass({
                             senderID: data[k]['senderID'],
                             body: data[k]['body'],
                             timestamp: data[k]['timestamp'],
-                            own: data[k]['senderID'] === 'fbid:' + this.props.currentUserID
+                            own: data[k]['senderID'] === 'fbid:' + this.props.currentUserID,
+                            photo: 'https://graph.facebook.com/' + data[k]['senderID'].toString().slice(5) + '/picture?width=50'
                         };
                         threads.push(thread);
                     }
@@ -387,16 +371,13 @@ var Thread = React.createClass({
                 }.bind(this)
             });
         }
-
     },
 
     render: function () {
         var messages = this.state.messagesCache.map(message => {
             return (message.own) ? (
                 <li className="row own" key={message.id}>
-                    <p className="message-sender me">
-                        {message.senderName ? message.senderName.charAt(0) : "X"}
-                    </p>
+                    <img src={message.photo} alt={message.senderName + " photo"} className="message-sender me"/>
                     <p className="own message-body own-message-background small-5 medium-7 large-9 columns">
                         {message.body}
                     </p>
@@ -406,9 +387,7 @@ var Thread = React.createClass({
                 </li>
             ) : (
                 <li className="row foreign" key={message.id}>
-                    <p className="message-sender friend">
-                        {message.senderName.charAt(0)}
-                    </p>
+                    <img src={message.photo} alt={message.senderName + " photo"}     className="message-sender friend"/>
                     <p className="foreign message-body foreign-message-background small-5 medium-7 large-9 columns">
                         {message.body}
                     </p>

@@ -8,6 +8,7 @@
 
     toolbox.precache(['/index.html', '/css/base.css', '/scripts/messenger.js']);
 
+    toolbox.router.get('/', toolbox.cacheFirst);
     toolbox.router.get('/api/threads/*', toolbox.networkFirst);
     toolbox.router.get('/api/listen', toolbox.networkOnly);
     toolbox.router.get('/api', toolbox.cacheFirst);
@@ -22,7 +23,7 @@
     toolbox.router.get('https://graph.facebook.com/*', toolbox.cacheFirst);
 
     self.addEventListener('sync', function (event) { // may be global
-        console.log(event) // TODO: background sync
+       // console.log(event) // TODO: background sync
     });
 })(self);
 

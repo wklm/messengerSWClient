@@ -74,7 +74,7 @@ figcaption {
 
 .message-sender {
     border-radius: 50%;
-    border: solid;
+    border: solid 1px;
     height: 2rem;
     width: 2rem;
     text-align: center;
@@ -136,13 +136,13 @@ figcaption {
 }
 
 .me {
-    color: lightgray;
-    border-color: lightgray;
+    color: tomato;
+    border-color: tomato;
 }
 
 .friend {
-    color: darkgray;
-    border-color: darkgray;
+    color: teal;
+    border-color: teal;
 }
 
 ::-webkit-scrollbar {

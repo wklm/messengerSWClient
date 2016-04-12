@@ -22,11 +22,10 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 var sess;
 
-
 function login(email, password) {
     messenger({email: email, password: password}, function callback(err, api) {
         sess.apiSession = api.getAppState();
-        return err;
+        return !!err; // null -> true -> false
     });
 }
 
@@ -34,21 +33,18 @@ io.on('connection', function (socket) {
     socket.on('chat message outgoing', function (msg) {
         message = JSON.parse(msg);
         messenger({appState: sess.apiSession}, function callback(err, api) {
-            if (err)  console.error(err);
-            if (message['body'] && message['thread']) {
+            if (!err && message['body'] && message['thread']) {
                 api.sendMessage(message['body'], message['thread']);
-            }
+            } else console.error(err);
         });
     });
 });
 
-
 app.get('/api', function (req, res) {
-    sess=req.session;
+    sess = req.session;
     sess.email = req.param('email').toString().trim();
     sess.password = req.param('password').toString().trim();
-    login(sess.email, sess.password) ? res.send(false) : res.send(true);
-
+    res.send(login(sess.email, sess.password));
 });
 
 app.get('/api/currentUserID', function (req, res) {
@@ -68,7 +64,6 @@ app.get('/api/appStatus', function (req, res) {
 app.get('/api/threads/:threadID/portion/:portion', function (req, res) {
     var start = req.params.portion;
     var end = start + 10;
-
     messenger({appState: sess.apiSession}, function callback(err, api) {
         if (err) return console.error(err);
         api.getThreadHistory(req.params.threadID, start, end, null, function (err, data) {
@@ -86,7 +81,7 @@ app.get('/api/friends', function (req, res) {
     });
 });
 
-app.get('/api/listen', function (req, res) { //TODO: Prevent multiple socket instances
+app.get('/api/listen', function (req, res) { //TODO: Prevent multiple socket instances for a single session
     messenger({appState: sess.apiSession}, function callback(err, api) {
         if (err) return console.error(err);
         var stopListening = api.listen(function (err, event) {
@@ -101,7 +96,6 @@ app.get('/api/listen', function (req, res) { //TODO: Prevent multiple socket ins
                     date: Date.now()
                 };
                 io.emit('chat message incoming', JSON.stringify(message));
-                console.log(message);
             }
         });
     })
@@ -110,8 +104,7 @@ app.get('/api/listen', function (req, res) { //TODO: Prevent multiple socket ins
 app.get('/api/logout', function (req, res) {
     messenger({appState: sess.apiSession}, function callback(err, api) {
         if (err) return console.error(err);
-        api.logout(function (err) {
-            if (err) return console.error(err);
+        api.logout(function () {
             res.send(true);
         });
     });
@@ -121,15 +114,10 @@ app.get('/api/threads/:portion', function (req, res) {
     var start = req.params.portion;
     var end = start + 25;
     messenger({appState: sess.apiSession}, function callback(err, api) {
-        if (api) {
-            api.getThreadList(start, end, function (err, data) {
-                if (err) return console.error(err);
-                if (data) {
-                    res.send(data);
-                    return true;
-                }
-            });
-        }
+        if (err) return console.error(err);
+        api.getThreadList(start, end, function (err, data) {
+            res.send(data);
+        });
     });
 });
 
@@ -151,7 +139,6 @@ app.get('/api/getUserById/:id', function (req, res) {
     });
 });
 
-
 app.get('/sw', function (req, res) {
     res.sendFile(path.join(__dirname + '/public/scripts/serviceWorker.js'));
 });
@@ -171,5 +158,5 @@ app.listen(app.get('port'), function () {
     console.log('Server started: http://localhost:3000');
 });
 
-server.listen(3000);
+server.listen(3000); //TODO: envs
 
