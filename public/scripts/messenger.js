@@ -169,11 +169,8 @@ var ThreadsList = React.createClass({
     },
 
     handleNotification: function (message) {
-        if (!Notification) {
-            return;
-        }
-        if (Notification.permission !== "granted")
-            Notification.requestPermission();
+        if (!Notification) {return;}
+        if (Notification.permission !== "granted") {Notification.requestPermission();}
         else {
             var notification = new Notification(participantsRepository[message.senderID].firstName, {
                 icon: participantsRepository[message.senderID].photo,
@@ -258,6 +255,7 @@ var ThreadsList = React.createClass({
                         currentUserID={this.state.currentUserID}
                         updateThreadsList={this.appendNewMessage}
                         currentView={this.state.currentView}
+                        currentUserID={this.state.currentUserID}
                         ref="thread"
                         className={this.state.currentView === 'threadsListView' ? "hidden" : ""}
                     />
@@ -292,7 +290,9 @@ var Thread = React.createClass({
                 thread: this.props.currentThread,
                 senderName: 'you', //todo: name
                 own: true,
-                date: Date.now()
+                date: Date.now(),
+                photo: 'https://graph.facebook.com/' + this.props.currentUserID + '/picture?width=50'
+
             };
             if (message.body && message.thread) {
                 this.appendNewMessageToQueue(message);
@@ -326,8 +326,10 @@ var Thread = React.createClass({
                 thread: msg.thread,
                 senderName: participantsRepository[msg.senderID].firstName,
                 own: false,
-                date: Date.now()
-            };
+                date: Date.now(),
+                photo: 'https://graph.facebook.com/' + msg.senderID + '/picture?width=50'
+
+        };
             this.state.messagesCache.push(message);
             this.setState({
                 lastReceived: message
@@ -336,9 +338,9 @@ var Thread = React.createClass({
         return true;
     },
 
-    componentWillReceiveProps: function (nextProp) { //update
-        this.state.messagesCache = []; // <--------------------------------------- 22:08
-        if(nextProp.currentView === "threadView" && nextProp.currentThread !== this.state.currentThread) {
+    componentWillReceiveProps: function (nextProp) {
+        this.state.messagesCache.length = 0; // flush messages cache
+        if(nextProp.currentView === "threadView") {
             this.loadThread(nextProp.currentThread, 1);
             this.state.currentThread = nextProp.currentThread;
         }
@@ -353,8 +355,7 @@ var Thread = React.createClass({
     },
 
     loadThread: function (thread, portion) {
-        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + thread);
-        var threads = [];
+        let threads = [];
         if (thread !== this.props.currentThread && portion) {
             $.ajax({
                 url: '/api/threads/' + thread + '/portion/' + portion,
@@ -589,14 +590,14 @@ ReactDOM.render(
     document.getElementById('messenger')
 );
 
-//if ('serviceWorker' in navigator) {
-//    navigator.serviceWorker.register('/sw', {
-//        scope: '/'
-//    });
-//    navigator.serviceWorker.ready.then(function (swRegistration) {
-//        return swRegistration.sync.register('myFirstSync');
-//    });
-//}
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw', {
+        scope: '/'
+    });
+    navigator.serviceWorker.ready.then(function (swRegistration) {
+        return swRegistration.sync.register('myFirstSync');
+    });
+}
 
 function getTimePassed(threadTimestamp) {
     var elapsed = Date.now() - threadTimestamp;
