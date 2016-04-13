@@ -81,7 +81,7 @@ app.get('/api/friends', function (req, res) {
     });
 });
 
-app.get('/api/listen', function (req, res) { //TODO: Prevent multiple socket instances for a single session
+app.get('/api/listen', function (req, res) { //TODO: Prevent multiple socket instances for a single session, support another message types
     messenger({appState: sess.apiSession}, function callback(err, api) {
         if (err) return console.error(err);
         var stopListening = api.listen(function (err, event) {

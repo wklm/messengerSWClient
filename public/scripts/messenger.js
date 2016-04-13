@@ -1,5 +1,5 @@
 var socket = io.connect('localhost:3000'); // TODO: ENVS!
-var participantsRepository = {}; // TODO: should be stored in an independent state container
+var participantsRepository = {}; // TODO: should be stored in an independent state container, now global because of GC
 
 var Messenger = React.createClass({
     getInitialState: function () {
@@ -178,11 +178,7 @@ var ThreadsList = React.createClass({
             });
             notification.onclick = function () {
                 this.props.updateViewOnMessengerComponent('threadView');
-                this.setState({
-                    lastThread: this.state.currentThread,
-                    currentThread: message.thread,
-                    currentView: 'thhreadView'
-                })
+                this.updateCurrentThread(message.thread, true);
             }.bind(this);
         }
     },
@@ -204,8 +200,8 @@ var ThreadsList = React.createClass({
         this.loadThreadsList(0); //TODO: add jQery scroll
     },
 
-    updateCurrentThread: function (thread) {
-        if (thread === this.state.currentThread || this.state.currentThread === null) {
+    updateCurrentThread: function (thread, fromNotification) {
+        if (fromNotification || thread === this.state.currentThread || this.state.currentThread === null) {
             this.setState({
                 lastThread: this.state.currentThread,
                 currentThread: thread,
@@ -231,7 +227,7 @@ var ThreadsList = React.createClass({
             let time = getTimePassed(thread.timestamp);
             return (
                 <div className="row thread" key={thread.threadID}
-                     onClick={updateCurrentThread.bind(null,thread.threadID)}>
+                     onClick={updateCurrentThread.bind(null,thread.threadID, false)}>
                     <div className="small-3 columns">
                         <ThreadParticipants ids={thread.participantIDs}
                                             currentUserID={this.state.currentUserID}
@@ -257,7 +253,7 @@ var ThreadsList = React.createClass({
                         currentView={this.state.currentView}
                         currentUserID={this.state.currentUserID}
                         ref="thread"
-                        className={this.state.currentView === 'threadsListView' ? "hidden" : ""}
+                        className={this.state.currentView === 'threadsListView' ? "hidden" : null}
                     />
                 </div>
 
@@ -328,8 +324,7 @@ var Thread = React.createClass({
                 own: false,
                 date: Date.now(),
                 photo: 'https://graph.facebook.com/' + msg.senderID + '/picture?width=50'
-
-        };
+            };
             this.state.messagesCache.push(message);
             this.setState({
                 lastReceived: message
@@ -382,13 +377,11 @@ var Thread = React.createClass({
                 }.bind(this)
             });
         }
-        threads = [];
     },
 
     render: function () {
         if (this.props.currentThread && this.props.currentThread !== this.props.lastThread)
         var messages = this.state.messagesCache.map(message => {
-            console.log(message, this.props.currentThread);
             return (message.own) ? (
                 <li className="row own" key={message.id}>
                     <img src={message.photo} alt={message.senderName + " photo"} className="message-sender me"/>
