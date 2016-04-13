@@ -25,7 +25,7 @@ var sess;
 function login(email, password) {
     messenger({email: email, password: password}, function callback(err, api) {
         sess.apiSession = api.getAppState();
-        return !!err; // null -> true -> false
+        return !!err;
     });
 }
 
@@ -44,7 +44,7 @@ app.get('/api', function (req, res) {
     sess = req.session;
     sess.email = req.param('email').toString().trim();
     sess.password = req.param('password').toString().trim();
-    res.send(login(sess.email, sess.password));
+    login(sess.email, sess.password) ? res.send(false) : res.send(true);
 });
 
 app.get('/api/currentUserID', function (req, res) {

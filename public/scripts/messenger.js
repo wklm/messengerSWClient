@@ -19,7 +19,6 @@ var Messenger = React.createClass({
         $.ajax({
             url: '/api',
             dataType: 'json',
-            cache: true,
             data: credentials,
             success: function (data) {
                 this.setState({authenticated: data});
@@ -34,7 +33,8 @@ var Messenger = React.createClass({
 
     goBack: function () {
         this.setState({
-            currentView: 'threadsListView'
+            currentView: 'threadsListView',
+            currentThread: null
         })
         this.refs['threadsList'].resetCurrentThread();
     },
@@ -92,6 +92,7 @@ var ThreadsList = React.createClass({
         return {
             data: [], //TODO: should be a dictionary with the key threadID
             currentThread: null,
+            lastThread: null,
             newMessageArrived: false,
             currentUserID: null,
             lastMessageID: null,
@@ -131,7 +132,6 @@ var ThreadsList = React.createClass({
     getCurrentUserID: function () {
         $.ajax({
             url: '/api/currentUserID/',
-            cache: true,
             success: function (data) {
                 this.setState({
                     currentUserID: data
@@ -145,8 +145,10 @@ var ThreadsList = React.createClass({
 
     resetCurrentThread: function () {
         this.setState({
+            lastThread: this.state.currentThread,
             currentThread: null
         })
+        this.refs['thread'].forceUpdate();
     },
 
     incomingMessagesListener: function () {
@@ -180,6 +182,7 @@ var ThreadsList = React.createClass({
             notification.onclick = function () {
                 this.props.updateViewOnMessengerComponent('threadView');
                 this.setState({
+                    lastThread: this.state.currentThread,
                     currentThread: message.thread,
                     currentView: 'thhreadView'
                 })
@@ -191,7 +194,6 @@ var ThreadsList = React.createClass({
         $.ajax({
             url: '/api/threads/' + portion,
             dataType: 'json',
-            cache: true,
             success: function (data) {
                 this.setState({data: data})
             }.bind(this),
@@ -206,18 +208,24 @@ var ThreadsList = React.createClass({
     },
 
     updateCurrentThread: function (thread) {
-        this.setState({
-            currentThread: thread,
-            currentView: 'threadView'
-        })
-        jQuery('#go-back-button').removeClass('hidden');
-
+        if (thread === this.state.currentThread || this.state.currentThread === null) {
+            this.setState({
+                lastThread: this.state.currentThread,
+                currentThread: thread,
+                currentView: 'threadView'
+            })
+            jQuery('#go-back-button').removeClass('hidden');
+        }
     },
 
     componentWillUnmount: function () {
         this.incomingMessagesListener('off');
         jQuery('#go-back-button').addClass('hidden');
 
+    },
+
+    shouldComponentUpdate: function(nextState) {
+      return this.state.currentThread !== nextState.currentThread
     },
 
     render: function () {
@@ -246,8 +254,10 @@ var ThreadsList = React.createClass({
                                 "inline-list uiScrollableArea small-12 columns"}>
                     <Thread
                         currentThread={this.state.currentThread}
+                        lastThread={this.state.lastThread}
                         currentUserID={this.state.currentUserID}
                         updateThreadsList={this.appendNewMessage}
+                        currentView={this.state.currentView}
                         ref="thread"
                         className={this.state.currentView === 'threadsListView' ? "hidden" : ""}
                     />
@@ -267,7 +277,6 @@ var Thread = React.createClass({
     getInitialState: function () {
         return {
             messagesCache: [],
-            currentThread: null,
             lastSent: null,
             lastReceived: null,
             messageQueue: []
@@ -276,11 +285,11 @@ var Thread = React.createClass({
 
     handleSubmit: function (e) {
         e.preventDefault();
-        if (this.state.currentThread) {
+        if (this.props.currentThread) {
             var message = {
                 id: this.state.messagesCache.length,
-                body: $('#' + this.state.currentThread).val(),
-                thread: this.state.currentThread,
+                body: $('#' + this.props.currentThread).val(),
+                thread: this.props.currentThread,
                 senderName: 'you', //todo: name
                 own: true,
                 date: Date.now()
@@ -288,7 +297,7 @@ var Thread = React.createClass({
             if (message.body && message.thread) {
                 this.appendNewMessageToQueue(message);
             }
-            $('#' + this.state.currentThread).val("");
+            $('#' + this.props.currentThread).val("");
         }
     },
 
@@ -310,7 +319,7 @@ var Thread = React.createClass({
     },
 
     appendIncomingMessageOnFronted: function (msg) {
-        if (msg.thread === this.state.currentThread) {
+        if (msg.thread === this.props.currentThread) {
             var message = {
                 id: msg.messagedID,
                 body: msg.body,
@@ -328,31 +337,32 @@ var Thread = React.createClass({
     },
 
     componentWillReceiveProps: function (nextProp) { //update
-        this.loadThread(nextProp.currentThread, 1);
-        this.setState({
-            currentThread: nextProp.currentThread
-        })
+        this.state.messagesCache = []; // <--------------------------------------- 22:08
+        if(nextProp.currentView === "threadView" && nextProp.currentThread !== this.state.currentThread) {
+            this.loadThread(nextProp.currentThread, 1);
+            this.state.currentThread = nextProp.currentThread;
+        }
+    },
+
+    shouldComponentUpdate: function(nextProp) {
+      return nextProp.currentView === "threadView";
     },
 
     componentWillUnmount: function () {
-        this.setState({
-            messagesCache: null,
-            currentThread: null
-
-        });
+        this.state.messagesCache = null;
     },
 
     loadThread: function (thread, portion) {
+        console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!!" + thread);
         var threads = [];
-        if (thread && portion) {
+        if (thread !== this.props.currentThread && portion) {
             $.ajax({
                 url: '/api/threads/' + thread + '/portion/' + portion,
                 dataType: 'json',
-                cache: true,
                 success: function (data) {
                     for (var k in data) {
                         let thread = {
-                            id: k,
+                            id: data[k]['messageID'], //  "mid.1458587656203:971b25d6fef9be6652" fells like bottleneck
                             senderName: data[k]['senderName'],
                             senderID: data[k]['senderID'],
                             body: data[k]['body'],
@@ -371,10 +381,13 @@ var Thread = React.createClass({
                 }.bind(this)
             });
         }
+        threads = [];
     },
 
     render: function () {
+        if (this.props.currentThread && this.props.currentThread !== this.props.lastThread)
         var messages = this.state.messagesCache.map(message => {
+            console.log(message, this.props.currentThread);
             return (message.own) ? (
                 <li className="row own" key={message.id}>
                     <img src={message.photo} alt={message.senderName + " photo"} className="message-sender me"/>
@@ -402,13 +415,14 @@ var Thread = React.createClass({
                 {messages}
                 <li className="row">
                     <form onSubmit={this.handleSubmit} action="">
-                        <input className="message-input small-12 columns" id={this.state.currentThread}
+                        <input className="message-input small-12 columns" id={this.props.currentThread}
                                autoComplete="off"
                                placeholder="input new message"/>
                     </form>
                 </li>
             </ul>
         )
+        messages = null;
     }
 });
 
@@ -465,13 +479,12 @@ var ThreadParticipants = React.createClass({
         };
     },
 
-    loadParticipants: function () {
+    loadParticipants: function () { // <-- spinner
         var participants = [];
         for (var id in this.props.ids) {
             $.ajax({
                 url: '/api/getUserById/' + this.props.ids[id],
                 dataType: 'json',
-                cache: true,
                 success: function (data) {
                     for (var k in data) {
                         let participant = {
@@ -542,7 +555,6 @@ var FriendsList = React.createClass({
         $.ajax({
             url: '/api/friends',
             dataType: 'json',
-            cache: true,
             success: function (data) {
                 this.setState({data: data});
             }.bind(this),
@@ -577,14 +589,14 @@ ReactDOM.render(
     document.getElementById('messenger')
 );
 
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw', {
-        scope: '/'
-    });
-    navigator.serviceWorker.ready.then(function (swRegistration) {
-        return swRegistration.sync.register('myFirstSync');
-    });
-}
+//if ('serviceWorker' in navigator) {
+//    navigator.serviceWorker.register('/sw', {
+//        scope: '/'
+//    });
+//    navigator.serviceWorker.ready.then(function (swRegistration) {
+//        return swRegistration.sync.register('myFirstSync');
+//    });
+//}
 
 function getTimePassed(threadTimestamp) {
     var elapsed = Date.now() - threadTimestamp;
