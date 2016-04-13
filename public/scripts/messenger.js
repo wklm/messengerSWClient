@@ -587,9 +587,9 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('/sw', {
         scope: '/'
     });
-    navigator.serviceWorker.ready.then(function (swRegistration) {
-        return swRegistration.sync.register('myFirstSync');
-    });
+    //navigator.serviceWorker.ready.then(function (swRegistration) {
+    //    return swRegistration.sync.register('myFirstSync');
+    //});
 }
 
 function getTimePassed(threadTimestamp) {
