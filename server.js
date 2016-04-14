@@ -31,13 +31,12 @@ function login(email, password) {
 
 io.on('connection', function (socket) {
     socket.on('chat message outgoing', function (msg) {
-        var message = JSON.parse(msg);
+        message = JSON.parse(msg);
         messenger({appState: sess.apiSession}, function callback(err, api) {
             if (!err && message['body'] && message['thread']) {
                 api.sendMessage(message['body'], message['thread']);
             } else console.error(err);
         });
-        message = null;
     });
 });
 
@@ -162,8 +161,8 @@ app.get('/sw-toolbox', function (req, res) {
 });
 
 app.listen(app.get('port'), function () {
-    console.log('Server started: http://localhost:3000');
+    console.log('Server started: http://78.104.5.37:80');
 });
 
-server.listen(3000); //TODO: envs
+server.listen(80); //TODO: envs
 

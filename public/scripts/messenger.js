@@ -1,4 +1,4 @@
-var socket = io.connect('localhost:3000'); // TODO: ENVS!
+var socket = io.connect('http://78.104.5.37'); // TODO: ENVS!
 var participantsRepository = {}; // TODO: should be stored in an independent state container, now global because of GC
 
 var Messenger = React.createClass({
@@ -106,6 +106,9 @@ var ThreadsList = React.createClass({
                 this.state.data[i].snippet = message.body;
                 this.state.data[i].serverTimestamp = Date.now();
                 this.state.data.splice(0, 0, this.state.data.splice(i, 1)[0]);
+                if (this.state.currentView === "threadsListView") {
+                    this.forceUpdate();
+                }
                 return;
             }
         }
@@ -242,9 +245,11 @@ var ThreadsList = React.createClass({
         return (
             <div className=" scroll-area-container columns">
                 <div
-                    className={this.state.currentView === 'threadsListView' ?
+                    className={ this.state.currentView === 'threadsListView' ?
                                 "inline-list uiScrollableArea small-12 columns hidden" :
-                                "inline-list uiScrollableArea small-12 columns"}>
+                                "inline-list uiScrollableArea small-12 columns" }
+                    id="messagesLists"
+                >
                     <Thread
                         currentThread={this.state.currentThread}
                         lastThread={this.state.lastThread}
@@ -257,9 +262,9 @@ var ThreadsList = React.createClass({
                     />
                 </div>
 
-                <div className={this.state.currentView === 'threadsListView' ?
+                <div className={ this.state.currentView === 'threadsListView' ?
                  "inline-list uiScrollableArea small-12 columns" :
-                 "inline-list uiScrollableArea small-12 columns hidden"}>
+                 "inline-list uiScrollableArea small-12 columns hidden" }>
                     {threads}
                 </div>
             </div>
@@ -275,6 +280,10 @@ var Thread = React.createClass({
             lastReceived: null,
             messageQueue: []
         }
+    },
+
+    componentDidUpdate: function() {
+        $('#messagesLists').scrollTop($('#messagesLists').prop("scrollHeight"));
     },
 
     handleSubmit: function (e) {
