@@ -169,8 +169,8 @@ var ThreadsList = React.createClass({
     },
 
     handleNotification: function (message) {
-        if (!Notification) {return;}
-        if (Notification.permission !== "granted") {Notification.requestPermission();}
+        if (!Notification) { return; }
+        if (Notification.permission !== "granted") { Notification.requestPermission(); }
         else {
             var notification = new Notification(participantsRepository[message.senderID].firstName, {
                 icon: participantsRepository[message.senderID].photo,
@@ -536,43 +536,6 @@ var ThreadParticipants = React.createClass({
             <div className="small-12 columns">
                 {participants.slice(0, 3)}
                 <p>and {participants.length - 3} others</p>
-            </div>
-        );
-    }
-});
-
-var FriendsList = React.createClass({
-    getInitialState: function () {
-        return {data: []};
-    },
-    loadFriendsList: function () {
-        $.ajax({
-            url: '/api/friends',
-            dataType: 'json',
-            success: function (data) {
-                this.setState({data: data});
-            }.bind(this),
-            error: function (xhr, status, err) {
-                console.error('api/friends', status, err.toString());
-            }.bind(this)
-        });
-    },
-    componentDidMount: function () {
-        this.loadFriendsList();
-    },
-
-    render: function () {
-        var friends = this.state.data.map(function (friend) {
-            return (
-                <div key={friend.userID}>
-                    <img src={friend.profilePicture} alt=""/>
-                    <p> {friend.firstName} </p>
-                </div>
-            );
-        });
-        return (
-            <div className="">
-                {friends}
             </div>
         );
     }

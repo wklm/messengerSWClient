@@ -9,7 +9,7 @@
     toolbox.precache(['/index.html', '/css/base.css', '/scripts/messenger.js']);
 
     toolbox.router.get('/', toolbox.cacheFirst);
-    toolbox.router.get('/api/threads/*', toolbox.cacheFirst);
+    toolbox.router.get('/api/threads/*', toolbox.networkFirst);
     toolbox.router.get('/api/listen', toolbox.networkOnly);
     toolbox.router.get('/api', toolbox.cacheFirst);
     toolbox.router.get('/api/currentUserID', toolbox.cacheFirst);

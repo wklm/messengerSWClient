@@ -81,7 +81,8 @@ app.get('/api/friends', function (req, res) {
     });
 });
 
-app.get('/api/listen', function (req, res) { //TODO: Prevent multiple socket instances for a single session, support another message types
+var lastMessageID = null;
+app.get('/api/listen', function (req, res) { //TODO: support another message types
     messenger({appState: sess.apiSession}, function callback(err, api) {
         if (err) return console.error(err);
         var stopListening = api.listen(function (err, event) {
@@ -95,9 +96,15 @@ app.get('/api/listen', function (req, res) { //TODO: Prevent multiple socket ins
                     senderID: event.senderID,
                     date: Date.now()
                 };
-                io.emit('chat message incoming', JSON.stringify(message));
+                if (event.messageID !== lastMessageID) { // Prevent multiple io.emit() calls <-- api bug :(
+                    io.emit('chat message incoming', JSON.stringify(message));
+                    console.log(message.body, message.messagedID);
+                }
+                lastMessageID = event.messageID;
+                message = null;
             }
         });
+        stopListening = null;
     })
 });
 
