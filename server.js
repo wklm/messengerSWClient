@@ -31,12 +31,13 @@ function login(email, password) {
 
 io.on('connection', function (socket) {
     socket.on('chat message outgoing', function (msg) {
-        message = JSON.parse(msg);
+        var message = JSON.parse(msg);
         messenger({appState: sess.apiSession}, function callback(err, api) {
             if (!err && message['body'] && message['thread']) {
                 api.sendMessage(message['body'], message['thread']);
             } else console.error(err);
         });
+        message = null;
     });
 });
 
@@ -98,7 +99,6 @@ app.get('/api/listen', function (req, res) { //TODO: support another message typ
                 };
                 if (event.messageID !== lastMessageID) { // Prevent multiple io.emit() calls <-- api bug :(
                     io.emit('chat message incoming', JSON.stringify(message));
-                    console.log(message.body, message.messagedID);
                 }
                 lastMessageID = event.messageID;
                 message = null;
